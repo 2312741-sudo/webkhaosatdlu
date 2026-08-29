@@ -1,8 +1,16 @@
 # Website Khảo Sát Mức Độ Hài Lòng Của Sinh Viên — Trường Đại Học Đà Lạt (DLU)
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-2312741--sudo%2Fwebkhaosatdlu-181717?style=flat&logo=github)](https://github.com/2312741-sudo/webkhaosatdlu)
+[![React](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?style=flat&logo=react)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?style=flat&logo=node.js)](https://nodejs.org/)
+[![Database](https://img.shields.io/badge/Database-SQLite%20WAL-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
+[![Build & Tests](https://img.shields.io/badge/Tests-100%25%20Passing-success?style=flat&logo=checkmarx)](https://github.com/2312741-sudo/webkhaosatdlu)
+[![Wiki](https://img.shields.io/badge/Documentation-Project%20Wiki-blue?style=flat&logo=gitbook)](WIKI.md)
+
 > **Đồ án chuyên ngành** — Khoa Công nghệ Thông tin, Trường Đại học Đà Lạt  
 > **Chủ đề:** Xây dựng hệ thống khảo sát trực tuyến, thu thập phản hồi của sinh viên, thống kê trực quan hóa bằng biểu đồ, xuất báo cáo PDF/Excel và phân quyền 3 vai trò.  
-> **Khẩu hiệu DLU:** *"Thụ nhân – Khai phóng – Bản sắc"*
+> **Khẩu hiệu DLU:** *"Thụ nhân – Khai phóng – Bản sắc"*  
+> 📖 **Xem tài liệu chi tiết toàn diện tại:** [WIKI.md](WIKI.md)
 
 ---
 
