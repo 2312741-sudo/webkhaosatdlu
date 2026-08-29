@@ -77,8 +77,8 @@ export default function Navbar() {
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           {/* Brand Logo & Institution Titles */}
-          <Link to="/" className="flex items-center gap-3.5 group">
-            <DLULogo className="w-13 h-13 sm:w-15 sm:h-15 group-hover:scale-105 transition-transform duration-300 flex-shrink-0" />
+          <Link to="/" className="flex items-center gap-3 group">
+            <DLULogo className="w-11 h-11 sm:w-12 sm:h-12 group-hover:scale-105 transition-transform duration-300 flex-shrink-0" />
             <div>
               <div className="text-[10px] sm:text-[11px] font-bold text-dlu-red uppercase tracking-wider leading-tight">
                 BỘ GIÁO DỤC VÀ ĐÀO TẠO

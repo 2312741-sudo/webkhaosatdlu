@@ -5,13 +5,19 @@ import dluLogoImg from './dlu-logo.png';
  * Component Logo Chính thức Trường Đại học Đà Lạt (DLU)
  * Sử dụng file logo gốc chính thống 1024x1024 từ máy chủ dlu.edu.vn
  */
-export default function DLULogo({ className = "w-14 h-14", showText = false, textVariant = "dark" }) {
+export default function DLULogo({ 
+  className = "w-11 h-11 sm:w-12 sm:h-12", 
+  imgClassName = "", 
+  showText = false, 
+  textVariant = "dark" 
+}) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="inline-flex items-center gap-3 flex-shrink-0">
       <img
         src={dluLogoImg}
         alt="Trường Đại học Đà Lạt - Dalat University"
-        className={`${className} object-contain flex-shrink-0 drop-shadow-md select-none`}
+        className={`${className} object-contain flex-shrink-0 drop-shadow-sm select-none ${imgClassName}`}
+        style={{ aspectRatio: '1 / 1' }}
         loading="eager"
       />
 
