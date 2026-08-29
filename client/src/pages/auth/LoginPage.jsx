@@ -52,10 +52,18 @@ export default function LoginPage() {
   };
 
   /**
-   * Chuyển hướng trực tiếp sang Google OAuth2 với hd=dlu.edu.vn
+   * Chuyển hướng sang Google OAuth2 nếu đã có Client ID, hoặc mở Modal nhập Google DLU trực tiếp
    */
   const handleRedirectToGoogleOAuth = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1088457788414-dlu-survey-oauth-client.apps.googleusercontent.com';
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    
+    // Nếu chưa cấu hình Google OAuth Client ID từ Google Cloud Console -> mở Modal Google DLU để đăng nhập ngay
+    if (!clientId || clientId.includes('dlu-survey-oauth-client') || clientId.includes('placeholder')) {
+      setGoogleError('');
+      setIsManualGoogleModalOpen(true);
+      return;
+    }
+
     const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
     const scope = encodeURIComponent('openid email profile');
     const hd = 'dlu.edu.vn';
