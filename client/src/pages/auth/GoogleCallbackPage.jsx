@@ -97,7 +97,10 @@ export default function GoogleCallbackPage() {
         throw new Error('Không nhận được thông tin xác thực từ Google.');
       } catch (err) {
         console.error('Lỗi xác thực Google:', err);
-        const msg = err.response?.data?.message || err.message || 'Đăng nhập Google thất bại.';
+        let msg = err.response?.data?.message || err.message || 'Đăng nhập Google thất bại.';
+        if (err.message === 'Network Error' || !err.response) {
+          msg = 'Không thể kết nối đến Backend Server (Network Error). Vui lòng kiểm tra lại xem Server API (Render/Local) đã được khởi động chưa và biến VITE_API_URL trên Vercel đã được cấu hình đúng chưa.';
+        }
         setErrorMessage(msg);
         toastError(msg);
       } finally {
