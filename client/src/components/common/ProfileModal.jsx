@@ -50,7 +50,7 @@ export default function ProfileModal({ isOpen, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose} title="Hồ sơ Sinh viên DLU" maxWidth="max-w-md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="p-3.5 bg-dlu-bg border border-slate-200 rounded-2xl flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-dlu-green flex-shrink-0 mt-0.5" />
+          <Info className="w-4 h-4 text-dlu-primary flex-shrink-0 mt-0.5" />
           <p className="text-xs text-slate-700 leading-relaxed">
             Thông tin này sẽ hiển thị trên hệ thống khảo sát của Khoa CNTT - Trường Đại học Đà Lạt.
           </p>
@@ -96,7 +96,7 @@ export default function ProfileModal({ isOpen, onClose }) {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="VD: Nguyễn Văn Hoàng"
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-green transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-primary transition"
             />
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                 value={className}
                 onChange={(e) => setClassName(e.target.value)}
                 placeholder="VD: CTK47"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-green"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-primary"
               />
             </div>
 
@@ -126,7 +126,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                 value={academicYear}
                 onChange={(e) => setAcademicYear(e.target.value)}
                 placeholder="VD: K47"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-green"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-primary"
               />
             </div>
           </div>
@@ -136,21 +136,21 @@ export default function ProfileModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50"
+            className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition cursor-pointer"
           >
             Đóng
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-dlu-green hover:bg-green-700 text-white text-xs font-bold shadow transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-dlu-primary hover:bg-dlu-hover text-white text-xs font-bold shadow-md transition disabled:opacity-50 cursor-pointer active:scale-95"
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>
                 <Save className="w-4 h-4 text-dlu-accent" />
-                <span>Lưu thông tin</span>
+                <span className="text-white font-bold">Lưu thông tin</span>
               </>
             )}
           </button>

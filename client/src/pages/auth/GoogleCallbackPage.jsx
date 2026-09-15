@@ -120,7 +120,7 @@ export default function GoogleCallbackPage() {
 
         {loading ? (
           <div>
-            <div className="w-10 h-10 border-4 border-dlu-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-10 h-10 border-4 border-dlu-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <h3 className="text-base font-bold text-slate-800">Đang đồng bộ tài khoản Google DLU...</h3>
             <p className="text-xs text-slate-500 mt-1">
               Hệ thống đang đọc thông tin sinh viên từ Google Workspace Trường Đại học Đà Lạt.

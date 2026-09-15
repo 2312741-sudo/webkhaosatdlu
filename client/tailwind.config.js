@@ -10,6 +10,7 @@ export default {
         dlu: {
           // Tông màu chính: Xanh lá đậm (rêu) thương hiệu DLU
           primary: '#1B4D3E',      // Xanh lá đậm / Rêu chính
+          green: '#1B4D3E',        // Alias cho dlu-green
           dark: '#0F5132',         // Xanh rêu đậm sâu
           hover: '#143D31',        // Hover xanh rêu
           light: '#E8F3EE',        // Nền xanh nhạt

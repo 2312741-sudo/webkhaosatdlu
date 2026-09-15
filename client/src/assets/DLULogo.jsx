@@ -29,7 +29,7 @@ export default function DLULogo({
           <span className={`text-sm sm:text-base font-black uppercase tracking-tight leading-tight ${textVariant === 'light' ? 'text-white' : 'text-dlu-primary'}`}>
             TRƯỜNG ĐẠI HỌC ĐÀ LẠT
           </span>
-          <span className={`text-xs font-bold leading-tight ${textVariant === 'light' ? 'text-dlu-accent' : 'text-dlu-green'}`}>
+          <span className={`text-xs font-bold leading-tight ${textVariant === 'light' ? 'text-dlu-accent' : 'text-dlu-primary'}`}>
             KHOA CÔNG NGHỆ THÔNG TIN
           </span>
         </div>
