@@ -258,7 +258,8 @@ class AuthService {
       email: user.email,
       fullName: user.full_name,
       role: user.role,
-      facultyId: user.faculty_id,
+      facultyId: user.faculty_id || 1,
+      facultyCode: user.faculty_code || 'CNTT',
       facultyName: user.faculty_name || 'Khoa Công nghệ Thông tin',
       className: user.class_name || (user.student_code ? `CTK${parseInt(user.student_code.substring(0, 2), 10) + 24}` : null),
       academicYear: user.academic_year || (user.student_code ? `K${parseInt(user.student_code.substring(0, 2), 10) + 24}` : null)
@@ -297,7 +298,8 @@ class AuthService {
       email: user.email,
       fullName: user.full_name,
       role: user.role,
-      facultyId: user.faculty_id,
+      facultyId: user.faculty_id || 1,
+      facultyCode: user.faculty_code || 'CNTT',
       facultyName: user.faculty_name || 'Khoa Công nghệ Thông tin',
       className: user.class_name,
       academicYear: user.academic_year

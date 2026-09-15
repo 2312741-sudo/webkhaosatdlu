@@ -39,7 +39,7 @@ export default function SurveySuccessPage() {
           </Link>
 
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/student/surveys')}
             className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition"
           >
             <Home className="w-4 h-4" />

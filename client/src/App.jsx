@@ -22,13 +22,22 @@ import AuditLogPage from './pages/admin/AuditLogPage';
 function HomeRedirect() {
   const { user, isAuthenticated, loading } = useAuth();
 
-  if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-
-  if (user.role === 'STUDENT') {
-    return <Navigate to="/student/surveys" replace />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-4 border-dlu-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
-  return <Navigate to="/staff/surveys" replace />;
+
+  if (isAuthenticated && user) {
+    if (user.role === 'STUDENT') {
+      return <Navigate to="/student/surveys" replace />;
+    }
+    return <Navigate to="/staff/surveys" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 }
 
 export default function App() {

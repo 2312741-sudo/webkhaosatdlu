@@ -17,7 +17,8 @@ import {
   ExternalLink,
   User,
   Settings,
-  LayoutDashboard
+  LayoutDashboard,
+  Home
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -30,6 +31,19 @@ export default function Navbar() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleHeaderLoginClick = () => {
+    if (location.pathname === '/login') {
+      const submitBtn = document.getElementById('login-submit-btn');
+      if (submitBtn) {
+        submitBtn.click();
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else {
+      navigate('/login');
+    }
   };
 
   const isActive = (path) => {
@@ -77,7 +91,10 @@ export default function Navbar() {
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           {/* Brand Logo & Institution Titles */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link 
+            to={isAuthenticated && user ? (user.role === 'STUDENT' ? '/student/surveys' : '/staff/surveys') : '/login'} 
+            className="flex items-center gap-3 group"
+          >
             <DLULogo className="w-11 h-11 sm:w-12 sm:h-12 group-hover:scale-105 transition-transform duration-300 flex-shrink-0" />
             <div>
               <div className="text-[10px] sm:text-[11px] font-bold text-dlu-red uppercase tracking-wider leading-tight">
@@ -130,12 +147,13 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            <Link
-              to="/login"
-              className="px-5 py-2.5 rounded-xl bg-dlu-primary hover:bg-dlu-hover text-white font-bold text-xs transition shadow border border-dlu-dark"
+            <button
+              type="button"
+              onClick={handleHeaderLoginClick}
+              className="px-5 py-2.5 rounded-xl bg-dlu-primary hover:bg-dlu-hover text-white font-bold text-xs transition shadow border border-dlu-dark cursor-pointer active:scale-95"
             >
               Đăng nhập
-            </Link>
+            </button>
           )}
         </div>
       </div>
@@ -147,17 +165,27 @@ export default function Navbar() {
             {isAuthenticated ? (
               <>
                 {user.role === 'STUDENT' && (
-                  <Link
-                    to="/student/surveys"
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition ${
-                      isActive('/student/surveys')
-                        ? 'bg-dlu-dark text-dlu-accent shadow font-black border border-dlu-accent/40'
-                        : 'text-slate-100 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <ClipboardList className="w-4 h-4 text-dlu-accent" />
-                    Khảo sát của tôi
-                  </Link>
+                  <>
+                    <Link
+                      to="/student/surveys"
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition ${
+                        isActive('/student/surveys')
+                          ? 'bg-dlu-dark text-dlu-accent shadow font-black border border-dlu-accent/40'
+                          : 'text-slate-100 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Home className="w-4 h-4 text-dlu-accent" />
+                      Trang chủ
+                    </Link>
+
+                    <Link
+                      to="/student/surveys"
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition text-slate-100 hover:bg-white/10 hover:text-white"
+                    >
+                      <ClipboardList className="w-4 h-4 text-dlu-accent" />
+                      Khảo sát của tôi
+                    </Link>
+                  </>
                 )}
 
                 {(user.role === 'STAFF' || user.role === 'ADMIN') && (
@@ -170,8 +198,8 @@ export default function Navbar() {
                           : 'text-slate-100 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      <LayoutDashboard className="w-4 h-4 text-dlu-accent" />
-                      Quản lý Khảo sát
+                      <Home className="w-4 h-4 text-dlu-accent" />
+                      Trang chủ
                     </Link>
 
                     <Link
@@ -252,14 +280,24 @@ export default function Navbar() {
             </button>
 
             {user.role === 'STUDENT' && (
-              <Link
-                to="/student/surveys"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-white hover:bg-white/10"
-              >
-                <ClipboardList className="w-4 h-4 text-dlu-accent" />
-                Khảo sát của tôi
-              </Link>
+              <>
+                <Link
+                  to="/student/surveys"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-white hover:bg-white/10"
+                >
+                  <Home className="w-4 h-4 text-dlu-accent" />
+                  Trang chủ
+                </Link>
+                <Link
+                  to="/student/surveys"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-white hover:bg-white/10"
+                >
+                  <ClipboardList className="w-4 h-4 text-dlu-accent" />
+                  Khảo sát của tôi
+                </Link>
+              </>
             )}
 
             {(user.role === 'STAFF' || user.role === 'ADMIN') && (
@@ -269,8 +307,8 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-white hover:bg-white/10"
                 >
-                  <LayoutDashboard className="w-4 h-4 text-dlu-accent" />
-                  Quản lý Khảo sát
+                  <Home className="w-4 h-4 text-dlu-accent" />
+                  Trang chủ
                 </Link>
                 <Link
                   to="/staff/surveys/create"

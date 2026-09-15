@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -10,10 +10,6 @@ import {
   Lock, 
   Mail, 
   ArrowRight, 
-  UserCheck, 
-  Shield, 
-  GraduationCap, 
-  Sparkles, 
   CheckCircle2, 
   AlertCircle,
   ExternalLink,
@@ -34,22 +30,28 @@ export default function LoginPage() {
   const [googleError, setGoogleError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, user, isAuthenticated } = useAuth();
   const { success, error: toastError } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || null;
 
-  const handleRedirectAfterLogin = (user) => {
+  const handleRedirectAfterLogin = (loggedInUser) => {
     if (from) {
       navigate(from, { replace: true });
-    } else if (user.role === 'STUDENT') {
-      navigate('/student/surveys');
+    } else if (loggedInUser.role === 'STUDENT') {
+      navigate('/student/surveys', { replace: true });
     } else {
-      navigate('/staff/surveys');
+      navigate('/staff/surveys', { replace: true });
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      handleRedirectAfterLogin(user);
+    }
+  }, [isAuthenticated, user]);
 
   /**
    * Chuyển hướng sang Google OAuth2 nếu đã có Client ID, hoặc mở Modal nhập Google DLU trực tiếp
@@ -135,11 +137,6 @@ export default function LoginPage() {
     } finally {
       setGoogleLoading(false);
     }
-  };
-
-  const handleQuickLogin = (id, pass) => {
-    setIdentifier(id);
-    setPassword(pass);
   };
 
   return (
@@ -262,7 +259,7 @@ export default function LoginPage() {
                       required
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="VD: 2312741@dlu.edu.vn hoặc 2312741"
+                      placeholder="Nhập email trường DLU hoặc MSSV"
                       className="block w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-primary font-medium transition"
                     />
                   </div>
@@ -281,13 +278,14 @@ export default function LoginPage() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mật khẩu mặc định: 123456"
+                      placeholder="Nhập mật khẩu"
                       className="block w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-dlu-primary font-medium transition"
                     />
                   </div>
                 </div>
 
                 <button
+                  id="login-submit-btn"
                   type="submit"
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl shadow-md text-xs sm:text-sm font-bold text-white bg-dlu-primary hover:bg-dlu-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dlu-primary transition duration-200 disabled:opacity-50"
@@ -302,55 +300,6 @@ export default function LoginPage() {
                   )}
                 </button>
               </form>
-
-              {/* Demo Accounts */}
-              <div className="mt-6 pt-5 border-t border-slate-100">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 mb-2.5">
-                  <Sparkles className="w-3.5 h-3.5 text-dlu-accent" />
-                  <span>Tài khoản mẫu đầy đủ Họ & Tên (Demo Hội đồng):</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('2111234@dlu.edu.vn', '123456')}
-                    className="p-2 rounded-xl bg-dlu-light border border-dlu-primary/20 hover:bg-dlu-light/80 text-[11px] font-bold text-dlu-dark text-center transition flex flex-col items-center gap-0.5"
-                  >
-                    <UserCheck className="w-3.5 h-3.5 text-dlu-primary" />
-                    <span>Trần Văn An</span>
-                    <span className="text-[9px] text-slate-600 font-normal">SV K45 • CTK45</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('2211236@dlu.edu.vn', '123456')}
-                    className="p-2 rounded-xl bg-dlu-light border border-dlu-primary/20 hover:bg-dlu-light/80 text-[11px] font-bold text-dlu-dark text-center transition flex flex-col items-center gap-0.5"
-                  >
-                    <UserCheck className="w-3.5 h-3.5 text-dlu-primary" />
-                    <span>Phạm M. Cường</span>
-                    <span className="text-[9px] text-slate-600 font-normal">SV K46 • CTK46</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('canbo.cntt@dlu.edu.vn', 'canbo123')}
-                    className="p-2 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 text-[11px] font-bold text-amber-900 text-center transition flex flex-col items-center gap-0.5"
-                  >
-                    <GraduationCap className="w-3.5 h-3.5 text-amber-700" />
-                    <span>ThS. N.V. Hải</span>
-                    <span className="text-[9px] text-amber-800 font-normal">Cán bộ CNTT</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('admin@dlu.edu.vn', 'admin123')}
-                    className="p-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-[11px] font-bold text-rose-900 text-center transition flex flex-col items-center gap-0.5"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-dlu-red" />
-                    <span>Quản trị viên</span>
-                    <span className="text-[9px] text-rose-800 font-normal">Admin DLU</span>
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>

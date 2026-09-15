@@ -7,15 +7,26 @@ class ResponseService {
    */
   async getStudentSurveys(studentUser) {
     const studentId = studentUser.id;
-    const facultyCode = studentUser.facultyCode;
-    const className = studentUser.className;
-    const academicYear = studentUser.academicYear;
+    
+    // Luôn truy vấn thông tin người dùng mới nhất từ database kèm mã khoa
+    const student = db.get(`
+      SELECT u.*, f.code as faculty_code, f.name as faculty_name
+      FROM users u
+      LEFT JOIN faculties f ON u.faculty_id = f.id
+      WHERE u.id = ?
+    `, [studentId]) || studentUser;
 
-    // Lấy tất cả khảo sát đang mở (PUBLISHED) hoặc đã làm
+    const studentFacultyCode = (student.faculty_code || studentUser.facultyCode || 'CNTT').trim().toUpperCase();
+    const studentFacultyId = student.faculty_id || studentUser.facultyId || 1;
+    const studentClass = (student.class_name || studentUser.className || '').trim().toUpperCase();
+    const studentCohort = (student.academic_year || studentUser.academicYear || '').trim().toUpperCase();
+
+    // Lấy tất cả khảo sát đang mở (PUBLISHED) hoặc đã kết thúc (CLOSED)
     const surveys = db.query(`
       SELECT s.*, 
              u.full_name as creator_name,
              f.name as faculty_name,
+             f.code as faculty_code,
              (SELECT COUNT(*) FROM questions q WHERE q.survey_id = s.id) as question_count,
              (SELECT id FROM survey_responses sr WHERE sr.survey_id = s.id AND sr.student_id = ?) as response_id,
              (SELECT submitted_at FROM survey_responses sr WHERE sr.survey_id = s.id AND sr.student_id = ?) as student_submitted_at
@@ -32,26 +43,48 @@ class ResponseService {
       const targets = db.query('SELECT * FROM survey_targets WHERE survey_id = ?', [survey.id]);
       
       let isEligible = false;
-      if (targets.length === 0) {
+      if (!targets || targets.length === 0) {
         isEligible = true;
       } else {
         for (const t of targets) {
-          if (t.target_type === 'ALL') {
+          const targetType = (t.target_type || '').toUpperCase();
+          const targetVal = (t.target_value || '').trim().toUpperCase();
+
+          if (targetType === 'ALL' || targetVal === 'ALL' || targetVal === '') {
             isEligible = true;
             break;
           }
-          if (t.target_type === 'FACULTY' && t.target_value === facultyCode) {
-            isEligible = true;
-            break;
+          if (targetType === 'FACULTY') {
+            if (
+              targetVal === studentFacultyCode ||
+              targetVal === String(studentFacultyId) ||
+              (survey.faculty_id && survey.faculty_id === studentFacultyId) ||
+              (survey.faculty_code && survey.faculty_code.toUpperCase() === studentFacultyCode)
+            ) {
+              isEligible = true;
+              break;
+            }
           }
-          if (t.target_type === 'CLASS' && t.target_value === className) {
-            isEligible = true;
-            break;
+          if (targetType === 'CLASS') {
+            if (targetVal === studentClass || !studentClass) {
+              isEligible = true;
+              break;
+            }
           }
-          if (t.target_type === 'ACADEMIC_YEAR' && t.target_value === academicYear) {
-            isEligible = true;
-            break;
+          if (targetType === 'ACADEMIC_YEAR') {
+            if (targetVal === studentCohort || !studentCohort) {
+              isEligible = true;
+              break;
+            }
           }
+        }
+      }
+
+      // Nếu khảo sát thuộc Khoa của sinh viên hoặc toàn trường (faculty_id IS NULL) và không có ràng buộc lớp/khóa loại trừ
+      if (!isEligible && (!survey.faculty_id || survey.faculty_id === studentFacultyId)) {
+        const hasSpecificRestrictions = targets.some(t => ['CLASS', 'ACADEMIC_YEAR'].includes((t.target_type || '').toUpperCase()));
+        if (!hasSpecificRestrictions) {
+          isEligible = true;
         }
       }
 

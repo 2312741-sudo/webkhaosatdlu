@@ -36,9 +36,6 @@
 | **Sinh viên (STUDENT)** | `2111234@dlu.edu.vn` (hoặc `2111234`) | `123456` | Sinh viên Trần Văn An - Lớp CTK45 (Khoa CNTT) |
 | **Sinh viên (STUDENT)** | `2211236@dlu.edu.vn` (hoặc `2211236`) | `123456` | Sinh viên Phạm Minh Cường - Lớp CTK46 (Khoa CNTT) |
 | **Sinh viên (STUDENT)** | `2311238@dlu.edu.vn` (hoặc `2311238`) | `123456` | Sinh viên Đặng Quốc Hùng - Lớp CTK47 (Khoa CNTT) |
-
-> 💡 *Trên giao diện trang Đăng nhập, có sẵn 3 nút "Đăng nhập nhanh" 1-click cho Sinh viên, Cán bộ và Admin để tiện cho việc trình bày trước hội đồng.*
-
 ---
 
 ## 🚀 3. Hướng dẫn Cài đặt & Khởi chạy Nhanh

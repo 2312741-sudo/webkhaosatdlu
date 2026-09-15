@@ -122,6 +122,11 @@ async function runTests() {
   
   // Student 8 (Dang Quoc Hung) takes survey 1
   const student8Auth = await authService.login('2311238', '123456');
+  assert.strictEqual(student8Auth.user.facultyCode, 'CNTT', 'Mã khoa sinh viên phải là CNTT');
+
+  const studentSurveys = await responseService.getStudentSurveys(student8Auth.user);
+  assert(studentSurveys.length >= 2, 'Sinh viên phải thấy đầy đủ các khảo sát được phát hành (không bị ẩn chỉ còn 1 bài)');
+  console.log(`  - Sinh viên truy cập thấy đầy đủ ${studentSurveys.length} khảo sát được phát hành`);
   
   const submitResult = await responseService.submitSurveyResponse(1, {
     completion_time_seconds: 120,

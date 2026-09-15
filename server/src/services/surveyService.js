@@ -93,7 +93,7 @@ class SurveyService {
    * Tạo mới phiếu khảo sát
    */
   async createSurvey(data, user) {
-    const { title, description, faculty_id, start_time, end_time, is_anonymous, targets = [] } = data;
+    const { title, description, faculty_id, status, start_time, end_time, is_anonymous, targets = [] } = data;
 
     if (!title || !title.trim()) {
       throw { statusCode: 400, message: 'Tiêu đề khảo sát không được để trống.' };
@@ -101,16 +101,18 @@ class SurveyService {
 
     const accessToken = 'dlu-' + crypto.randomBytes(6).toString('hex');
     const facultyId = faculty_id || user.facultyId || null;
+    const initialStatus = status && ['DRAFT', 'PUBLISHED', 'CLOSED'].includes(status) ? status : 'DRAFT';
 
     const result = db.transaction((tx) => {
       const res = tx.run(`
         INSERT INTO surveys (title, description, created_by, faculty_id, status, start_time, end_time, is_anonymous, access_token)
-        VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         title.trim(),
         description ? description.trim() : '',
         user.id,
         facultyId,
+        initialStatus,
         start_time || null,
         end_time || null,
         is_anonymous ? 1 : 0,
@@ -150,17 +152,18 @@ class SurveyService {
       throw { statusCode: 403, message: 'Bạn không có quyền chỉnh sửa khảo sát này.' };
     }
 
-    const { title, description, faculty_id, start_time, end_time, is_anonymous, targets } = data;
+    const { title, description, faculty_id, status, start_time, end_time, is_anonymous, targets } = data;
 
     db.transaction((tx) => {
       tx.run(`
         UPDATE surveys
-        SET title = ?, description = ?, faculty_id = ?, start_time = ?, end_time = ?, is_anonymous = ?, updated_at = CURRENT_TIMESTAMP
+        SET title = ?, description = ?, faculty_id = ?, status = ?, start_time = ?, end_time = ?, is_anonymous = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `, [
         title !== undefined ? title.trim() : survey.title,
         description !== undefined ? description.trim() : survey.description,
         faculty_id !== undefined ? faculty_id : survey.faculty_id,
+        status !== undefined && ['DRAFT', 'PUBLISHED', 'CLOSED'].includes(status) ? status : survey.status,
         start_time !== undefined ? start_time : survey.start_time,
         end_time !== undefined ? end_time : survey.end_time,
         is_anonymous !== undefined ? (is_anonymous ? 1 : 0) : survey.is_anonymous,

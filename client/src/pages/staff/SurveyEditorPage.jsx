@@ -23,6 +23,7 @@ export default function SurveyEditorPage() {
     title: '',
     description: '',
     faculty_id: '',
+    status: 'PUBLISHED',
     start_time: '',
     end_time: '',
     is_anonymous: false,
@@ -58,6 +59,7 @@ export default function SurveyEditorPage() {
           title: s.title,
           description: s.description || '',
           faculty_id: s.faculty_id || '',
+          status: s.status || 'DRAFT',
           start_time: s.start_time ? s.start_time.substring(0, 16) : '',
           end_time: s.end_time ? s.end_time.substring(0, 16) : '',
           is_anonymous: s.is_anonymous === 1,
@@ -238,6 +240,22 @@ export default function SurveyEditorPage() {
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-dlu-royal"
               />
             </div>
+          </div>
+
+          {/* Survey Status */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+              Trạng thái khảo sát
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-dlu-royal font-semibold text-slate-800"
+            >
+              <option value="PUBLISHED">🚀 Phát hành ngay (PUBLISHED - Sinh viên có thể thấy và làm bài)</option>
+              <option value="DRAFT">📝 Bản nháp (DRAFT - Đang biên soạn, chưa công khai)</option>
+              {isEditing && <option value="CLOSED">🔒 Đã đóng (CLOSED - Kết thúc nhận phản hồi)</option>}
+            </select>
           </div>
 
           {/* Survey Target Audiences (Đối tượng áp dụng) */}
