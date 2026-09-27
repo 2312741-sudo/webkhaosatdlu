@@ -6,6 +6,29 @@ import DLULogo from '../../assets/DLULogo';
 import api from '../../services/api';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
+// Giải mã an toàn JWT payload tương thích mọi trình duyệt (Safari, Chrome, Firefox)
+function parseJwtPayload(token) {
+  if (!token || typeof token !== 'string') return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4 !== 0) {
+      b64 += '=';
+    }
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const jsonStr = new TextDecoder('utf-8').decode(bytes);
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    console.warn('Lỗi giải mã JWT client-side:', e);
+    return null;
+  }
+}
+
 export default function GoogleCallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,72 +39,75 @@ export default function GoogleCallbackPage() {
   useEffect(() => {
     const handleGoogleResponse = async () => {
       try {
-        // 1. Phân tích hash hoặc query parameters trả về từ Google
-        const hash = location.hash.substring(1);
-        const search = location.search.substring(1);
-        const params = new URLSearchParams(hash || search);
+        // 1. Phân tích cả hash lẫn query parameters trả về từ Google
+        const rawHash = location.hash.startsWith('#') ? location.hash.substring(1) : location.hash;
+        const rawSearch = location.search.startsWith('?') ? location.search.substring(1) : location.search;
+        const hashParams = new URLSearchParams(rawHash);
+        const searchParams = new URLSearchParams(rawSearch);
 
-        const idToken = params.get('id_token');
-        const accessToken = params.get('access_token');
-        const code = params.get('code');
-        const error = params.get('error');
+        const idToken = hashParams.get('id_token') || searchParams.get('id_token');
+        const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+        const code = hashParams.get('code') || searchParams.get('code');
+        const error = hashParams.get('error') || searchParams.get('error') || hashParams.get('error_description');
 
         if (error) {
-          throw new Error(`Google trả về lỗi: ${error}`);
+          throw new Error(`Google trả về lỗi xác thực: ${error}`);
         }
 
         let userEmail = '';
         let userFullName = '';
-        let credential = idToken;
+        const credential = idToken || accessToken;
 
-        // 2. Nếu có access_token từ Google, gọi Google UserInfo API
-        if (accessToken) {
-          try {
-            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            if (userInfoRes.ok) {
-              const info = await userInfoRes.json();
-              userEmail = info.email;
-              userFullName = info.name || `${info.family_name || ''} ${info.given_name || ''}`.trim();
+        // 2. Thử giải mã trực tiếp từ ID Token JWT
+        if (idToken) {
+          const payload = parseJwtPayload(idToken);
+          if (payload) {
+            userEmail = payload.email || '';
+            userFullName = payload.name || `${payload.family_name || ''} ${payload.given_name || ''}`.trim();
+          }
+        }
+
+        // 3. Nếu chưa có email và có access_token, gọi Google UserInfo API
+        if (!userEmail && accessToken) {
+          const userinfoEndpoints = [
+            'https://openidconnect.googleapis.com/v1/userinfo',
+            'https://www.googleapis.com/oauth2/v3/userinfo'
+          ];
+          for (const endpoint of userinfoEndpoints) {
+            try {
+              const userInfoRes = await fetch(endpoint, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+              if (userInfoRes.ok) {
+                const info = await userInfoRes.json();
+                if (info.email) {
+                  userEmail = info.email;
+                  userFullName = info.name || `${info.family_name || ''} ${info.given_name || ''}`.trim() || userFullName;
+                  break;
+                }
+              }
+            } catch (e) {
+              console.warn(`Không thể lấy userinfo từ ${endpoint}:`, e);
             }
-          } catch (e) {
-            console.warn('Không thể gọi Google UserInfo API:', e);
           }
         }
 
-        // 3. Nếu có ID Token, decode payload từ JWT
-        if (!userEmail && idToken) {
-          try {
-            const base64Url = idToken.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(
-              atob(base64)
-                .split('')
-                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
-            );
-            const payload = JSON.parse(jsonPayload);
-            userEmail = payload.email;
-            userFullName = payload.name;
-          } catch (e) {
-            console.warn('Lỗi decode ID Token:', e);
-          }
-        }
-
-        // 4. Kiểm tra miền email @dlu.edu.vn
+        // 4. Kiểm tra miền email @dlu.edu.vn nếu đã lấy được email
         if (userEmail && !userEmail.toLowerCase().endsWith('@dlu.edu.vn')) {
           setErrorMessage(`Email ${userEmail} không thuộc tên miền @dlu.edu.vn của Trường Đại học Đà Lạt!`);
           setLoading(false);
           return;
         }
 
-        // 5. Gửi token Google lên server backend — server tự xác minh với Google rồi mới cấp token hệ thống
-        if (credential || accessToken) {
+        // 5. Gửi token và email Google lên server backend
+        if (credential || accessToken || userEmail || code) {
           const res = await api.post('/auth/google-dlu', {
             idToken: credential,
+            credential: credential,
             accessToken,
-            fullName: userFullName
+            email: userEmail,
+            fullName: userFullName,
+            code
           });
 
           if (res.data.success) {
@@ -94,12 +120,12 @@ export default function GoogleCallbackPage() {
           }
         }
 
-        throw new Error('Không nhận được thông tin xác thực từ Google.');
+        throw new Error('Không nhận được thông tin xác thực hợp lệ từ Google.');
       } catch (err) {
         console.error('Lỗi xác thực Google:', err);
         let msg = err.response?.data?.message || err.message || 'Đăng nhập Google thất bại.';
         if (err.message === 'Network Error' || !err.response) {
-          msg = 'Không thể kết nối đến Backend Server (Network Error). Vui lòng kiểm tra lại xem Server API (Render/Local) đã được khởi động chưa và biến VITE_API_URL trên Vercel đã được cấu hình đúng chưa.';
+          msg = 'Không thể kết nối đến Backend Server (Network Error). Vui lòng kiểm tra lại kết nối mạng hoặc thử lại.';
         }
         setErrorMessage(msg);
         toastError(msg);
@@ -135,12 +161,20 @@ export default function GoogleCallbackPage() {
             <p className="text-xs text-slate-600 leading-relaxed font-medium bg-rose-50 p-3 rounded-xl border border-rose-200">
               {errorMessage}
             </p>
-            <button
-              onClick={() => navigate('/login')}
-              className="w-full py-2.5 px-4 rounded-xl bg-dlu-primary text-white text-xs font-bold hover:bg-dlu-royal transition shadow"
-            >
-              Quay lại trang Đăng nhập
-            </button>
+            <div className="space-y-2 pt-2">
+              <button
+                onClick={() => navigate('/login?googleDirect=1')}
+                className="w-full py-2.5 px-4 rounded-xl bg-dlu-primary text-white text-xs font-bold hover:bg-dlu-hover transition shadow cursor-pointer active:scale-95"
+              >
+                Nhập trực tiếp Email Google DLU (@dlu.edu.vn)
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition cursor-pointer"
+              >
+                Quay lại trang Đăng nhập
+              </button>
+            </div>
           </div>
         ) : (
           <div>

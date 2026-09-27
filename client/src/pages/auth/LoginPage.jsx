@@ -48,6 +48,13 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('googleDirect') === '1' || params.get('manualGoogle') === '1') {
+      setIsManualGoogleModalOpen(true);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
     if (isAuthenticated && user) {
       handleRedirectAfterLogin(user);
     }
@@ -69,7 +76,7 @@ export default function LoginPage() {
     const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
     const scope = encodeURIComponent('openid email profile');
     const hd = 'dlu.edu.vn';
-    const responseType = 'token id_token';
+    const responseType = 'id_token token';
     const nonce = Math.random().toString(36).substring(2);
 
     const googleOAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${encodeURIComponent(responseType)}&scope=${scope}&hd=${hd}&prompt=select_account&nonce=${nonce}`;
@@ -229,9 +236,9 @@ export default function LoginPage() {
                       setGoogleError('');
                       setIsManualGoogleModalOpen(true);
                     }}
-                    className="text-[11px] text-slate-500 hover:text-dlu-primary underline font-medium"
+                    className="text-[11px] text-slate-500 hover:text-dlu-primary underline font-medium cursor-pointer"
                   >
-                    Chế độ demo cục bộ: nhập email Google DLU (server phải bật ALLOW_DEV_GOOGLE_LOGIN)
+                    Nhập trực tiếp email Google DLU (@dlu.edu.vn)
                   </button>
                 </div>
               </div>
