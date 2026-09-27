@@ -17,8 +17,13 @@ class AuthController {
 
   async loginWithGoogle(req, res, next) {
     try {
-      const { email, fullName, credential } = req.body;
-      const result = await authService.loginWithDluGoogle(email, fullName, credential);
+      const { email, fullName, credential, idToken, accessToken } = req.body;
+      const result = await authService.loginWithDluGoogle({
+        idToken: idToken || credential,
+        accessToken,
+        email,
+        fullName
+      });
       res.status(200).json({
         success: true,
         message: 'Đăng nhập Google Workspace DLU thành công!',

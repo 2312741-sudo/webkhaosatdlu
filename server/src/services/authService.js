@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const { JWT_SECRET } = require('../config/jwt');
 const { logAction } = require('../utils/auditLogger');
 
 class AuthService {
@@ -49,36 +51,78 @@ class AuthService {
   }
 
   /**
-   * Giải mã Google ID Token JWT (nếu nhận được token từ Google GIS SDK)
+   * Chế độ đăng nhập Google "giả lập" (chỉ nhập email) — CHỈ dùng khi demo trên máy cục bộ.
+   * Phải bật rõ ràng ALLOW_DEV_GOOGLE_LOGIN=true và không chạy ở production.
    */
-  decodeGoogleCredential(credential) {
-    try {
-      const parts = credential.split('.');
-      if (parts.length === 3) {
-        const payload = Buffer.from(parts[1], 'base64').toString('utf8');
-        return JSON.parse(payload);
-      }
-    } catch (e) {
-      console.warn('Không thể decode Google JWT:', e.message);
+  isDevGoogleLoginAllowed() {
+    return process.env.ALLOW_DEV_GOOGLE_LOGIN === 'true' && process.env.NODE_ENV !== 'production';
+  }
+
+  /**
+   * Xác minh token do Google cấp bằng endpoint tokeninfo chính thức của Google
+   * (Google kiểm tra chữ ký & thời hạn), sau đó kiểm tra token được cấp cho đúng Client ID của hệ thống.
+   * @returns {{ email: string, name: string }}
+   */
+  async verifyGoogleToken({ idToken, accessToken }) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      throw { statusCode: 503, message: 'Máy chủ chưa cấu hình GOOGLE_CLIENT_ID nên chưa hỗ trợ đăng nhập Google.' };
     }
-    return null;
+
+    const invalid = { statusCode: 401, message: 'Token Google không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.' };
+    const tokenParam = idToken
+      ? `id_token=${encodeURIComponent(idToken)}`
+      : `access_token=${encodeURIComponent(accessToken)}`;
+
+    let info;
+    try {
+      const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?${tokenParam}`);
+      if (!res.ok) throw invalid;
+      info = await res.json();
+    } catch (e) {
+      if (e === invalid) throw invalid;
+      throw { statusCode: 502, message: 'Không thể kết nối tới Google để xác minh đăng nhập.' };
+    }
+
+    if (info.aud !== clientId && info.azp !== clientId) throw invalid;
+    if (idToken && !['accounts.google.com', 'https://accounts.google.com'].includes(info.iss)) throw invalid;
+    if (!info.email || String(info.email_verified) !== 'true') {
+      throw { statusCode: 401, message: 'Email Google chưa được xác minh.' };
+    }
+
+    let name = info.name || '';
+    if (!name && accessToken) {
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (res.ok) name = (await res.json()).name || '';
+      } catch (e) {
+        // Không lấy được tên thì dùng tên mặc định
+      }
+    }
+
+    return { email: info.email, name };
   }
 
   /**
    * Đăng nhập / Xác thực tài khoản Google (@dlu.edu.vn)
-   * Nhận email và fullName trực tiếp từ Google Identity Services
+   * Email chỉ được tin cậy khi lấy từ token đã được Google xác minh.
    */
-  async loginWithDluGoogle(email, fullName = '', credential = null) {
-    let targetEmail = email;
+  async loginWithDluGoogle({ idToken, accessToken, email, fullName = '' } = {}) {
+    let targetEmail;
     let targetName = fullName;
+    let isDevLogin = false;
 
-    // Nếu có Google JWT Credential gửi lên từ Google Sign-In SDK
-    if (credential) {
-      const decoded = this.decodeGoogleCredential(credential);
-      if (decoded && decoded.email) {
-        targetEmail = decoded.email;
-        targetName = decoded.name || targetName;
-      }
+    if (idToken || accessToken) {
+      const verified = await this.verifyGoogleToken({ idToken, accessToken });
+      targetEmail = verified.email;
+      targetName = verified.name || fullName;
+    } else if (this.isDevGoogleLoginAllowed()) {
+      targetEmail = email;
+      isDevLogin = true;
+    } else {
+      throw { statusCode: 401, message: 'Thiếu token xác thực từ Google. Vui lòng đăng nhập qua nút "Đăng nhập với Google DLU".' };
     }
 
     if (!targetEmail || typeof targetEmail !== 'string') {
@@ -103,26 +147,35 @@ class AuthService {
       WHERE LOWER(u.email) = ?
     `, [cleanEmail]);
 
-    // Nếu tài khoản chưa từng đăng nhập trước đó -> Tự động đăng ký & cấp quyền
+    // Chế độ giả lập cục bộ chỉ được đăng nhập vào tài khoản SINH VIÊN, không bao giờ vào tài khoản Cán bộ / Admin
+    if (isDevLogin && user && user.role !== 'STUDENT') {
+      throw { statusCode: 403, message: 'Chế độ đăng nhập Google giả lập chỉ áp dụng cho tài khoản sinh viên.' };
+    }
+
+    // Nếu tài khoản chưa từng đăng nhập trước đó -> Tự động đăng ký (chỉ với email sinh viên)
     if (!user) {
       const dluInfo = this.parseDluStudentInfo(cleanEmail);
-      const randomPassword = await bcrypt.hash(Math.random().toString(36), 10);
-      const displayName = targetName && targetName.trim() 
-        ? targetName.trim() 
-        : (dluInfo.isStudent ? `Sinh viên ${dluInfo.studentCode}` : cleanEmail.split('@')[0]);
-      const role = dluInfo.isStudent ? 'STUDENT' : 'STAFF';
+
+      // Tài khoản cán bộ có quyền tạo / phát hành khảo sát nên phải do Admin cấp, không tự đăng ký
+      if (!dluInfo.isStudent) {
+        throw { statusCode: 403, message: 'Tài khoản cán bộ chưa được cấp quyền truy cập. Vui lòng liên hệ Quản trị viên hệ thống.' };
+      }
+
+      const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+      const displayName = targetName && targetName.trim()
+        ? targetName.trim()
+        : `Sinh viên ${dluInfo.studentCode}`;
 
       const res = db.run(`
         INSERT INTO users (student_code, email, password_hash, full_name, role, faculty_id, class_name, academic_year, is_active)
-        VALUES (?, ?, ?, ?, ?, 1, ?, ?, 1)
+        VALUES (?, ?, ?, ?, 'STUDENT', 1, ?, ?, 1)
       `, [
-        dluInfo.studentCode || null,
+        dluInfo.studentCode,
         cleanEmail,
         randomPassword,
         displayName,
-        role,
-        dluInfo.className || 'CTK47',
-        dluInfo.academicYear || 'K47'
+        dluInfo.className,
+        dluInfo.academicYear
       ]);
 
       user = db.get(`
@@ -167,53 +220,16 @@ class AuthService {
       WHERE LOWER(u.email) = ? OR u.student_code = ?
     `, [cleanIdentifier, identifier.trim()]);
 
-    // 2. Nếu là email sinh viên DLU thật (@dlu.edu.vn) lần đầu đăng nhập
-    if (!user) {
-      const dluInfo = this.parseDluStudentInfo(cleanIdentifier);
-      if (dluInfo.isStudent) {
-        const defaultName = providedFullName && providedFullName.trim() 
-          ? providedFullName.trim() 
-          : `Sinh viên ${dluInfo.studentCode}`;
-        const newHash = await bcrypt.hash(password, 10);
-
-        const res = db.run(`
-          INSERT INTO users (student_code, email, password_hash, full_name, role, faculty_id, class_name, academic_year, is_active)
-          VALUES (?, ?, ?, ?, 'STUDENT', 1, ?, ?, 1)
-        `, [
-          dluInfo.studentCode,
-          dluInfo.email,
-          newHash,
-          defaultName,
-          dluInfo.className,
-          dluInfo.academicYear
-        ]);
-
-        user = db.get(`
-          SELECT u.*, f.name as faculty_name, f.code as faculty_code
-          FROM users u
-          LEFT JOIN faculties f ON u.faculty_id = f.id
-          WHERE u.id = ?
-        `, [res.lastInsertRowid]);
-
-        logAction(user.id, 'AUTO_REGISTER_DLU', 'USER', user.id, `Tự động cấp tài khoản sinh viên DLU: ${user.email}`);
-      } else {
-        throw { statusCode: 401, message: 'Tài khoản DLU không tồn tại hoặc mật khẩu không chính xác.' };
-      }
+    // 2. Kiểm tra mật khẩu. Không tự tạo tài khoản qua form mật khẩu (ai cũng có thể gõ một MSSV bất kỳ);
+    //    sinh viên mới dùng "Đăng nhập với Google DLU" hoặc được Admin cấp tài khoản.
+    const isPasswordValid = user ? await bcrypt.compare(password, user.password_hash) : false;
+    if (!isPasswordValid) {
+      logAction(user ? user.id : null, 'LOGIN_FAILED', 'USER', user ? user.id : null, `Đăng nhập thất bại với tài khoản: ${cleanIdentifier}`);
+      throw { statusCode: 401, message: 'Tài khoản DLU không tồn tại hoặc mật khẩu không chính xác.' };
     }
 
     if (!user.is_active) {
       throw { statusCode: 403, message: 'Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ Văn phòng Khoa CNTT.' };
-    }
-
-    // Kiểm tra mật khẩu
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordValid) {
-      if (password === '123456' || password === 'dlu123456') {
-        const newHash = await bcrypt.hash(password, 10);
-        db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, user.id]);
-      } else {
-        throw { statusCode: 401, message: 'Mật khẩu không chính xác. Mật khẩu mặc định lần đầu là 123456.' };
-      }
     }
 
     if (providedFullName && providedFullName.trim() && user.full_name.startsWith('Sinh viên ')) {
@@ -265,7 +281,7 @@ class AuthService {
       academicYear: user.academic_year || (user.student_code ? `K${parseInt(user.student_code.substring(0, 2), 10) + 24}` : null)
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'dlu_survey_secret_key_2026_khoa_cntt', {
+    const token = jwt.sign(payload, JWT_SECRET, {
       expiresIn: '7d'
     });
 

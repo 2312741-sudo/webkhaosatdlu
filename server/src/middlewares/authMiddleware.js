@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const db = require('../config/db');
+const { JWT_SECRET } = require('../config/jwt');
 
 /**
  * Middleware xác thực JWT token từ Header (Authorization: Bearer <token>)
@@ -14,14 +16,24 @@ function authenticateToken(req, res, next) {
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'dlu_survey_secret_key_2026_khoa_cntt', (err, user) => {
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({
         success: false,
         message: 'Token không hợp lệ hoặc đã hết hạn.'
       });
     }
-    req.user = user;
+
+    // Đối chiếu với CSDL để tài khoản bị khóa / bị xóa / đổi vai trò mất hiệu lực ngay lập tức
+    const dbUser = db.get('SELECT role, is_active FROM users WHERE id = ?', [user.id]);
+    if (!dbUser || !dbUser.is_active) {
+      return res.status(401).json({
+        success: false,
+        message: 'Tài khoản không tồn tại hoặc đã bị khóa. Vui lòng đăng nhập lại!'
+      });
+    }
+
+    req.user = { ...user, role: dbUser.role };
     next();
   });
 }

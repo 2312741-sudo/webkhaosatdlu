@@ -21,7 +21,8 @@ class ResponseController {
 
   async submitResponse(req, res, next) {
     try {
-      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      // Dùng req.ip (tôn trọng cấu hình 'trust proxy') thay vì tin trực tiếp header X-Forwarded-For do client tự gửi
+      const ip = req.ip || req.socket.remoteAddress;
       const result = await responseService.submitSurveyResponse(
         Number(req.params.surveyId),
         req.body,

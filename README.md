@@ -30,8 +30,8 @@
 
 | Vai trò | Email / Tài khoản | Mật khẩu | Thông tin chi tiết |
 | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin@dlu.edu.vn` (hoặc `admin`) | `admin123` | Toàn quyền quản lý người dùng, phân quyền, xem nhật ký Audit Logs, quản lý mọi khảo sát |
-| **Cán bộ khảo sát (STAFF)** | `canbo.cntt@dlu.edu.vn` (hoặc `canbo.cntt`) | `canbo123` | ThS. Nguyễn Văn Hải - Trợ lý Đào tạo Khoa CNTT. Tạo, sửa câu hỏi, phát hành, lấy mã QR, xem thống kê biểu đồ và xuất báo cáo |
+| **Quản trị viên (ADMIN)** | `admin@dlu.edu.vn` | `admin123` | Toàn quyền quản lý người dùng, phân quyền, xem nhật ký Audit Logs, quản lý mọi khảo sát |
+| **Cán bộ khảo sát (STAFF)** | `canbo.cntt@dlu.edu.vn` | `canbo123` | ThS. Nguyễn Văn Hải - Trợ lý Đào tạo Khoa CNTT. Tạo, sửa câu hỏi, phát hành, lấy mã QR, xem thống kê biểu đồ và xuất báo cáo |
 | **Cán bộ ĐBCL (STAFF)** | `canbo.dbcl@dlu.edu.vn` | `canbo123` | Trần Thị Thu Hà - Phòng Đảm bảo Chất lượng |
 | **Sinh viên (STUDENT)** | `2111234@dlu.edu.vn` (hoặc `2111234`) | `123456` | Sinh viên Trần Văn An - Lớp CTK45 (Khoa CNTT) |
 | **Sinh viên (STUDENT)** | `2211236@dlu.edu.vn` (hoặc `2211236`) | `123456` | Sinh viên Phạm Minh Cường - Lớp CTK46 (Khoa CNTT) |
@@ -161,5 +161,5 @@ webkhaosatdlu/
    - Cấu hình `location /api/` proxy pass đến `http://localhost:5001`.
 
 ### Cách 2: Triển khai Miễn phí trên Cloud (Render / Vercel)
-- **Backend API:** Deploy lên [Render.com](https://render.com) (Web Service Node.js, đặt biến môi trường `PORT=5001`, `JWT_SECRET=...`).
-- **Frontend UI:** Deploy lên [Vercel.com](https://vercel.com) (Root directory: `client`, Build command: `npm run build`, Output: `dist`).
+- **Backend API:** Deploy lên [Render.com](https://render.com) (Web Service Node.js, đặt biến môi trường `PORT=5001`, `NODE_ENV=production`, `JWT_SECRET=<chuỗi ngẫu nhiên ≥ 32 ký tự>`, `CLIENT_URL=<domain Vercel>`, `GOOGLE_CLIENT_ID=...`, `TRUST_PROXY=1`).
+- **Frontend UI:** Deploy lên [Vercel.com](https://vercel.com) (Root directory: `client`, Build command: `npm run build`, Output: `dist`, biến môi trường `VITE_API_URL` và `VITE_GOOGLE_CLIENT_ID`).

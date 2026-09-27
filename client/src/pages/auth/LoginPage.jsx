@@ -231,7 +231,7 @@ export default function LoginPage() {
                     }}
                     className="text-[11px] text-slate-500 hover:text-dlu-primary underline font-medium"
                   >
-                    Nhập email Google DLU nếu chạy trên máy cục bộ (Localhost)
+                    Chế độ demo cục bộ: nhập email Google DLU (server phải bật ALLOW_DEV_GOOGLE_LOGIN)
                   </button>
                 </div>
               </div>

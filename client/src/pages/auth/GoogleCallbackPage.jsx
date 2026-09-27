@@ -76,12 +76,12 @@ export default function GoogleCallbackPage() {
           return;
         }
 
-        // 5. Gửi lên server backend để xác thực và cấp token
-        if (userEmail || credential) {
+        // 5. Gửi token Google lên server backend — server tự xác minh với Google rồi mới cấp token hệ thống
+        if (credential || accessToken) {
           const res = await api.post('/auth/google-dlu', {
-            email: userEmail,
-            fullName: userFullName,
-            credential
+            idToken: credential,
+            accessToken,
+            fullName: userFullName
           });
 
           if (res.data.success) {

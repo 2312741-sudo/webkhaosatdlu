@@ -8,6 +8,17 @@ const analyticsService = require('../src/services/analyticsService');
 const userService = require('../src/services/userService');
 const { generateSurveyExcel } = require('../src/utils/excelGenerator');
 const { generateSurveyPdf } = require('../src/utils/pdfGenerator');
+const db = require('../src/config/db');
+
+async function expectError(fn, statusCode) {
+  try {
+    await fn();
+  } catch (err) {
+    assert.strictEqual(err.statusCode, statusCode, `Mong đợi lỗi ${statusCode}, nhận được: ${err.statusCode} - ${err.message}`);
+    return err;
+  }
+  assert.fail(`Mong đợi lỗi ${statusCode} nhưng thao tác lại thành công`);
+}
 
 async function runTests() {
   console.log('🧪 Bắt đầu chạy bộ kiểm thử Backend DLU Survey...\n');
@@ -36,28 +47,51 @@ async function runTests() {
   assert.strictEqual(studentAuth.user.studentCode, '2111234', 'Mã sinh viên chính xác');
   console.log('  - Đăng nhập Sinh viên bằng Mã SV thành công');
 
-  // Test real DLU email login (auto-provisioning for any real student 2211999@dlu.edu.vn)
-  const realStudentAuth = await authService.login('2211999@dlu.edu.vn', '123456');
-  assert.strictEqual(realStudentAuth.user.studentCode, '2211999');
-  assert.strictEqual(realStudentAuth.user.academicYear, 'K46');
-  assert.strictEqual(realStudentAuth.user.className, 'CTK46');
-  console.log('  - Nhận diện và tự động cấp quyền cho Mail thật sinh viên DLU (2211999@dlu.edu.vn -> K46 CTK46) thành công');
+  // Mật khẩu "123456" không còn là chìa khóa vạn năng
+  await expectError(() => authService.login('admin@dlu.edu.vn', '123456'), 401);
+  await expectError(() => authService.login('canbo.cntt@dlu.edu.vn', 'dlu123456'), 401);
+  const adminStillWorks = await authService.login('admin@dlu.edu.vn', 'admin123');
+  assert.strictEqual(adminStillWorks.user.role, 'ADMIN', 'Mật khẩu Admin không bị ghi đè');
+  console.log('  - Chặn đăng nhập Admin / Cán bộ bằng mật khẩu mặc định 123456');
 
-  // Test Google DLU Workspace SSO
-  const googleDluAuth = await authService.loginWithDluGoogle('2311888@dlu.edu.vn', 'Nguyễn Thị Hoa');
+  // Không tự tạo tài khoản qua form mật khẩu với MSSV bất kỳ
+  await expectError(() => authService.login('2211999@dlu.edu.vn', '123456'), 401);
+  console.log('  - Không tự cấp tài khoản khi đăng nhập bằng MSSV chưa tồn tại');
+
+  // Google SSO: gửi email trần (không có token Google) phải bị từ chối
+  delete process.env.ALLOW_DEV_GOOGLE_LOGIN;
+  await expectError(() => authService.loginWithDluGoogle({ email: 'admin@dlu.edu.vn' }), 401);
+  await expectError(() => authService.loginWithDluGoogle({ email: '2311888@dlu.edu.vn', fullName: 'Nguyễn Thị Hoa' }), 401);
+  console.log('  - Chặn giả mạo Google SSO bằng cách chỉ gửi email');
+
+  // Google SSO với token đã được Google xác minh (giả lập kết quả xác minh)
+  const originalVerify = authService.verifyGoogleToken;
+  let verifiedEmail = '2311888@dlu.edu.vn';
+  authService.verifyGoogleToken = async () => ({ email: verifiedEmail, name: 'Nguyễn Thị Hoa' });
+
+  const googleDluAuth = await authService.loginWithDluGoogle({ idToken: 'verified-token' });
   assert(googleDluAuth.token);
   assert.strictEqual(googleDluAuth.user.studentCode, '2311888');
   assert.strictEqual(googleDluAuth.user.academicYear, 'K47');
-  console.log('  - Đăng nhập Google Workspace DLU (@dlu.edu.vn) thành công');
+  assert.strictEqual(googleDluAuth.user.role, 'STUDENT');
+  console.log('  - Đăng nhập Google Workspace DLU (@dlu.edu.vn) với token hợp lệ thành công');
 
-  // Test non-DLU email rejection for Google SSO
-  try {
-    await authService.loginWithDluGoogle('test@gmail.com', 'Hacker');
-    assert.fail('Phải từ chối email không thuộc domain @dlu.edu.vn');
-  } catch (err) {
-    assert.strictEqual(err.statusCode, 400);
-    console.log('  - Chặn email ngoài trường (@gmail.com) chính xác');
-  }
+  verifiedEmail = 'test@gmail.com';
+  await expectError(() => authService.loginWithDluGoogle({ idToken: 'verified-token' }), 400);
+  console.log('  - Chặn email ngoài trường (@gmail.com) chính xác');
+
+  verifiedEmail = 'nguoila@dlu.edu.vn';
+  await expectError(() => authService.loginWithDluGoogle({ idToken: 'verified-token' }), 403);
+  console.log('  - Không tự cấp quyền Cán bộ cho email không phải sinh viên');
+  authService.verifyGoogleToken = originalVerify;
+
+  // Chế độ demo cục bộ: chỉ vào được tài khoản sinh viên
+  process.env.ALLOW_DEV_GOOGLE_LOGIN = 'true';
+  await expectError(() => authService.loginWithDluGoogle({ email: 'admin@dlu.edu.vn' }), 403);
+  const devStudent = await authService.loginWithDluGoogle({ email: '2211236@dlu.edu.vn' });
+  assert.strictEqual(devStudent.user.role, 'STUDENT');
+  delete process.env.ALLOW_DEV_GOOGLE_LOGIN;
+  console.log('  - Chế độ demo Google chỉ áp dụng cho tài khoản sinh viên');
 
   // Test wrong password
   try {
@@ -155,6 +189,68 @@ async function runTests() {
     assert(err.message.includes('Mỗi sinh viên chỉ được nộp một lần'), 'Thông báo chặn nộp trùng chính xác');
     console.log('  - Chặn nộp bài trùng lặp hoạt động hoàn hảo');
   }
+
+  // Cán bộ không được nộp bài (tránh làm sai lệch thống kê)
+  await expectError(() => responseService.submitSurveyResponse(newSurvey.id, {
+    answers: [{ question_id: q1.id, rating_value: 5 }, { question_id: q2.id, selected_option_id: q2.options[0].id }]
+  }, staffAuth.user), 403);
+  console.log('  - Chặn Cán bộ nộp phiếu khảo sát');
+
+  // Kiểm tra tính hợp lệ của câu trả lời
+  const student7Auth = await authService.login('2211236', '123456');
+  const validSingle = { question_id: q2.id, selected_option_id: q2.options[0].id };
+  await expectError(() => responseService.submitSurveyResponse(newSurvey.id, {
+    answers: [{ question_id: q1.id, rating_value: 5 }, validSingle, { question_id: 1, rating_value: 1 }]
+  }, student7Auth.user), 400);
+  await expectError(() => responseService.submitSurveyResponse(newSurvey.id, {
+    answers: [{ question_id: q1.id, rating_value: 5 }, { question_id: q2.id, selected_option_id: 1 }]
+  }, student7Auth.user), 400);
+  await expectError(() => responseService.submitSurveyResponse(newSurvey.id, {
+    answers: [{ question_id: q1.id, rating_value: 9 }, validSingle]
+  }, student7Auth.user), 400);
+  await expectError(() => responseService.submitSurveyResponse(newSurvey.id, {
+    answers: [{ question_id: q1.id, rating_value: 5 }, { question_id: q1.id, rating_value: 1 }, validSingle]
+  }, student7Auth.user), 400);
+  console.log('  - Từ chối câu hỏi / phương án của khảo sát khác, điểm Likert sai, câu trả lời trùng');
+
+  const validSubmit = await responseService.submitSurveyResponse(newSurvey.id, {
+    answers: [{ question_id: q1.id, rating_value: 4 }, validSingle]
+  }, student7Auth.user, '10.0.0.1');
+  assert(validSubmit.success);
+  console.log('  - Câu trả lời hợp lệ vẫn được ghi nhận');
+
+  // Khảo sát chỉ dành cho một lớp khác
+  const classSurvey = await surveyService.createSurvey({
+    title: 'Khảo sát riêng lớp CTK99',
+    targets: [{ target_type: 'CLASS', target_value: 'CTK99' }]
+  }, staffAuth.user);
+  const classQ = await questionService.createQuestion(classSurvey.id, {
+    question_text: 'Đánh giá chung?', question_type: 'LIKERT_5', is_required: 1
+  }, staffAuth.user);
+  await surveyService.updateSurveyStatus(classSurvey.id, 'PUBLISHED', staffAuth.user);
+
+  const student8Surveys = await responseService.getStudentSurveys(student8Auth.user);
+  assert(!student8Surveys.some(s => s.id === classSurvey.id), 'Sinh viên lớp khác không được thấy khảo sát riêng lớp CTK99');
+  await expectError(() => responseService.getSurveyForAnswering(String(classSurvey.id), student8Auth.user), 403);
+  await expectError(() => responseService.submitSurveyResponse(classSurvey.id, {
+    answers: [{ question_id: classQ.id, rating_value: 5 }]
+  }, student8Auth.user), 403);
+  console.log('  - Chặn sinh viên xem / nộp khảo sát không dành cho lớp của mình');
+
+  // Khảo sát ẩn danh không lưu IP
+  const anonSurvey = await surveyService.createSurvey({
+    title: 'Khảo sát ẩn danh', is_anonymous: 1, targets: [{ target_type: 'ALL', target_value: 'ALL' }]
+  }, staffAuth.user);
+  const anonQ = await questionService.createQuestion(anonSurvey.id, {
+    question_text: 'Góp ý?', question_type: 'TEXT', is_required: 1
+  }, staffAuth.user);
+  await surveyService.updateSurveyStatus(anonSurvey.id, 'PUBLISHED', staffAuth.user);
+  const anonResult = await responseService.submitSurveyResponse(anonSurvey.id, {
+    answers: [{ question_id: anonQ.id, text_answer: 'Ổn' }]
+  }, student8Auth.user, '10.0.0.2');
+  const anonRow = db.get('SELECT ip_address FROM survey_responses WHERE id = ?', [anonResult.responseId]);
+  assert.strictEqual(anonRow.ip_address, null, 'Khảo sát ẩn danh không được lưu IP');
+  console.log('  - Khảo sát ẩn danh không lưu địa chỉ IP');
   console.log('✅ Module 3 PASS!\n');
 
   // 5. Test Analytics Module
