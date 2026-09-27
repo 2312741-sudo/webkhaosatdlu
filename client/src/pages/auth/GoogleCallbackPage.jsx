@@ -35,107 +35,112 @@ export default function GoogleCallbackPage() {
   const { success, error: toastError } = useToast();
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
-    const handleGoogleResponse = async () => {
-      try {
-        // 1. Phân tích cả hash lẫn query parameters trả về từ Google
-        const rawHash = location.hash.startsWith('#') ? location.hash.substring(1) : location.hash;
-        const rawSearch = location.search.startsWith('?') ? location.search.substring(1) : location.search;
-        const hashParams = new URLSearchParams(rawHash);
-        const searchParams = new URLSearchParams(rawSearch);
+  const handleGoogleResponse = async () => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      // 1. Phân tích cả hash lẫn query parameters trả về từ Google
+      const rawHash = location.hash.startsWith('#') ? location.hash.substring(1) : location.hash;
+      const rawSearch = location.search.startsWith('?') ? location.search.substring(1) : location.search;
+      const hashParams = new URLSearchParams(rawHash);
+      const searchParams = new URLSearchParams(rawSearch);
 
-        const idToken = hashParams.get('id_token') || searchParams.get('id_token');
-        const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
-        const code = hashParams.get('code') || searchParams.get('code');
-        const error = hashParams.get('error') || searchParams.get('error') || hashParams.get('error_description');
+      const idToken = hashParams.get('id_token') || searchParams.get('id_token');
+      const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+      const code = hashParams.get('code') || searchParams.get('code');
+      const error = hashParams.get('error') || searchParams.get('error') || hashParams.get('error_description');
 
-        if (error) {
-          throw new Error(`Google trả về lỗi xác thực: ${error}`);
+      if (error) {
+        throw new Error(`Google trả về lỗi xác thực: ${error}`);
+      }
+
+      let userEmail = '';
+      let userFullName = '';
+      const credential = idToken || accessToken;
+
+      // 2. Thử giải mã trực tiếp từ ID Token JWT
+      if (idToken) {
+        const payload = parseJwtPayload(idToken);
+        if (payload) {
+          userEmail = payload.email || '';
+          userFullName = payload.name || `${payload.family_name || ''} ${payload.given_name || ''}`.trim();
         }
+      }
 
-        let userEmail = '';
-        let userFullName = '';
-        const credential = idToken || accessToken;
-
-        // 2. Thử giải mã trực tiếp từ ID Token JWT
-        if (idToken) {
-          const payload = parseJwtPayload(idToken);
-          if (payload) {
-            userEmail = payload.email || '';
-            userFullName = payload.name || `${payload.family_name || ''} ${payload.given_name || ''}`.trim();
-          }
-        }
-
-        // 3. Nếu chưa có email và có access_token, gọi Google UserInfo API
-        if (!userEmail && accessToken) {
-          const userinfoEndpoints = [
-            'https://openidconnect.googleapis.com/v1/userinfo',
-            'https://www.googleapis.com/oauth2/v3/userinfo'
-          ];
-          for (const endpoint of userinfoEndpoints) {
-            try {
-              const userInfoRes = await fetch(endpoint, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              });
-              if (userInfoRes.ok) {
-                const info = await userInfoRes.json();
-                if (info.email) {
-                  userEmail = info.email;
-                  userFullName = info.name || `${info.family_name || ''} ${info.given_name || ''}`.trim() || userFullName;
-                  break;
-                }
+      // 3. Nếu chưa có email và có access_token, gọi Google UserInfo API
+      if (!userEmail && accessToken) {
+        const userinfoEndpoints = [
+          'https://openidconnect.googleapis.com/v1/userinfo',
+          'https://www.googleapis.com/oauth2/v3/userinfo'
+        ];
+        for (const endpoint of userinfoEndpoints) {
+          try {
+            const userInfoRes = await fetch(endpoint, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            if (userInfoRes.ok) {
+              const info = await userInfoRes.json();
+              if (info.email) {
+                userEmail = info.email;
+                userFullName = info.name || `${info.family_name || ''} ${info.given_name || ''}`.trim() || userFullName;
+                break;
               }
-            } catch (e) {
-              console.warn(`Không thể lấy userinfo từ ${endpoint}:`, e);
             }
+          } catch (e) {
+            console.warn(`Không thể lấy userinfo từ ${endpoint}:`, e);
           }
         }
+      }
 
-        // 4. Kiểm tra miền email @dlu.edu.vn nếu đã lấy được email
-        if (userEmail && !userEmail.toLowerCase().endsWith('@dlu.edu.vn')) {
-          setErrorMessage(`Email ${userEmail} không thuộc tên miền @dlu.edu.vn của Trường Đại học Đà Lạt!`);
-          setLoading(false);
+      // 4. Kiểm tra miền email @dlu.edu.vn nếu đã lấy được email
+      if (userEmail && !userEmail.toLowerCase().endsWith('@dlu.edu.vn')) {
+        setErrorMessage(`Email ${userEmail} không thuộc tên miền @dlu.edu.vn của Trường Đại học Đà Lạt!`);
+        setLoading(false);
+        return;
+      }
+
+      // 5. Gửi token và email Google lên server backend
+      if (credential || accessToken || userEmail || code) {
+        const res = await api.post('/auth/google-dlu', {
+          idToken: idToken || credential,
+          credential: credential,
+          accessToken: accessToken || null,
+          email: userEmail,
+          fullName: userFullName,
+          code
+        });
+
+        if (res.data.success) {
+          const { token, user: userData } = res.data.data;
+          localStorage.setItem('dlu_survey_token', token);
+          localStorage.setItem('dlu_survey_user', JSON.stringify(userData));
+          success(`Đăng nhập Google DLU thành công! Chào mừng ${userData.fullName}.`);
+          window.location.href = userData.role === 'STUDENT' ? '/student/surveys' : '/staff/surveys';
           return;
         }
-
-        // 5. Gửi token và email Google lên server backend
-        if (credential || accessToken || userEmail || code) {
-          const res = await api.post('/auth/google-dlu', {
-            idToken: credential,
-            credential: credential,
-            accessToken,
-            email: userEmail,
-            fullName: userFullName,
-            code
-          });
-
-          if (res.data.success) {
-            const { token, user: userData } = res.data.data;
-            localStorage.setItem('dlu_survey_token', token);
-            localStorage.setItem('dlu_survey_user', JSON.stringify(userData));
-            success(`Đăng nhập Google DLU thành công! Chào mừng ${userData.fullName}.`);
-            window.location.href = userData.role === 'STUDENT' ? '/student/surveys' : '/staff/surveys';
-            return;
-          }
-        }
-
-        throw new Error('Không nhận được thông tin xác thực hợp lệ từ Google.');
-      } catch (err) {
-        console.error('Lỗi xác thực Google:', err);
-        let msg = err.response?.data?.message || err.message || 'Đăng nhập Google thất bại.';
-        if (err.message === 'Network Error' || !err.response) {
-          msg = 'Không thể kết nối đến Backend Server (Network Error). Vui lòng kiểm tra lại kết nối mạng hoặc thử lại.';
-        }
-        setErrorMessage(msg);
-        toastError(msg);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      throw new Error('Không nhận được thông tin xác thực hợp lệ từ Google.');
+    } catch (err) {
+      console.error('Lỗi xác thực Google:', err);
+      let msg = err.response?.data?.message || err.message || 'Đăng nhập Google thất bại.';
+      if (err.isVercelRewriteError) {
+        msg = err.message;
+      } else if (err.message === 'Network Error' || !err.response) {
+        msg = 'Không thể kết nối đến Backend Server (Network Error). Nếu Backend trên Render đang ở chế độ ngủ (free tier cold start), máy chủ cần khoảng 30-50 giây để khởi động lại. Bạn có thể bấm "Thử kết nối lại" bên dưới.';
+      }
+      setErrorMessage(msg);
+      toastError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     handleGoogleResponse();
-  }, [location]);
+  }, [location, retryCount]);
 
   return (
     <div className="min-h-[calc(100vh-140px)] flex items-center justify-center py-12 px-4 bg-dlu-bg">
@@ -149,7 +154,7 @@ export default function GoogleCallbackPage() {
             <div className="w-10 h-10 border-4 border-dlu-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <h3 className="text-base font-bold text-slate-800">Đang đồng bộ tài khoản Google DLU...</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Hệ thống đang đọc thông tin sinh viên từ Google Workspace Trường Đại học Đà Lạt.
+              Hệ thống đang kết nối máy chủ và xác minh thông tin sinh viên Trường Đại học Đà Lạt.
             </p>
           </div>
         ) : errorMessage ? (
@@ -158,13 +163,19 @@ export default function GoogleCallbackPage() {
               <AlertCircle className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-rose-700">Đăng nhập không thành công</h3>
-            <p className="text-xs text-slate-600 leading-relaxed font-medium bg-rose-50 p-3 rounded-xl border border-rose-200">
+            <p className="text-xs text-slate-600 leading-relaxed font-medium bg-rose-50 p-3 rounded-xl border border-rose-200 text-left">
               {errorMessage}
             </p>
             <div className="space-y-2 pt-2">
               <button
-                onClick={() => navigate('/login?googleDirect=1')}
+                onClick={() => setRetryCount(c => c + 1)}
                 className="w-full py-2.5 px-4 rounded-xl bg-dlu-primary text-white text-xs font-bold hover:bg-dlu-hover transition shadow cursor-pointer active:scale-95"
+              >
+                🔄 Thử kết nối lại
+              </button>
+              <button
+                onClick={() => navigate('/login?googleDirect=1')}
+                className="w-full py-2.5 px-4 rounded-xl border border-dlu-primary text-dlu-primary bg-blue-50/50 text-xs font-bold hover:bg-blue-50 transition cursor-pointer active:scale-95"
               >
                 Nhập trực tiếp Email Google DLU (@dlu.edu.vn)
               </button>

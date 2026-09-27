@@ -24,22 +24,62 @@ if (process.env.TRUST_PROXY) {
   app.set('trust proxy', /^\d+$/.test(process.env.TRUST_PROXY) ? Number(process.env.TRUST_PROXY) : process.env.TRUST_PROXY);
 }
 
-// Chỉ cho phép các domain Frontend được khai báo trong CLIENT_URL (phân tách bằng dấu phẩy)
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+// Cấu hình CORS linh hoạt và an toàn:
+// 1. Cho phép các origin được khai báo trong CLIENT_URL (phân tách dấu phẩy hoặc '*')
+// 2. Tự động cho phép localhost/127.0.0.1 (bất kỳ port nào)
+// 3. Tự động cho phép tất cả các domain deploy Vercel (*.vercel.app bao gồm preview deployments)
+// 4. Cho phép domain Render (*.onrender.com)
+// 5. Cho phép request không có origin (curl, mobile app, server-to-server)
+const configuredOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map(o => o.trim().replace(/\/$/, ''))
   .filter(Boolean);
 
-// Middlewares
-app.use(cors({
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  const clean = origin.trim().replace(/\/$/, '');
+
+  // Khai báo trong CLIENT_URL hoặc cấu hình wildcard '*'
+  if (configuredOrigins.includes('*') || configuredOrigins.includes(clean)) {
+    return true;
+  }
+
+  // Chạy cục bộ: localhost hoặc 127.0.0.1 ở bất kỳ port nào
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(clean)) {
+    return true;
+  }
+
+  // Toàn bộ các domain deploy trên Vercel (*.vercel.app bao gồm cả preview branches)
+  if (/^https:\/\/[a-zA-Z0-9_\.-]+\.vercel\.app$/i.test(clean)) {
+    return true;
+  }
+
+  // Toàn bộ domain Render (*.onrender.com)
+  if (/^https:\/\/[a-zA-Z0-9_\.-]+\.onrender\.com$/i.test(clean)) {
+    return true;
+  }
+
+  return false;
+};
+
+const corsOptions = {
   origin(origin, callback) {
-    // Cho phép request không có Origin (curl, server-to-server, ứng dụng di động)
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
+    }
+    console.warn(`[CORS Blocked] Origin không được phép: ${origin}`);
     return callback(null, false);
   },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // Cache preflight 24h
+};
+
+// Middlewares
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 

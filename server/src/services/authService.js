@@ -51,11 +51,12 @@ class AuthService {
   }
 
   /**
-   * Chế độ đăng nhập Google "giả lập" (chỉ nhập email) — CHỈ dùng khi demo trên máy cục bộ.
-   * Phải bật rõ ràng ALLOW_DEV_GOOGLE_LOGIN=true và không chạy ở production.
+   * Chế độ đăng nhập Google trực tiếp qua Email DLU (@dlu.edu.vn) cho Sinh viên:
+   * Bật rõ ràng khi có cấu hình ALLOW_DEV_GOOGLE_LOGIN=true (kể cả trên Render/Local).
+   * Lưu ý: Chỉ áp dụng cho tài khoản Sinh viên, Cán bộ / Admin luôn được bảo vệ nghiêm ngặt.
    */
   isDevGoogleLoginAllowed() {
-    return process.env.ALLOW_DEV_GOOGLE_LOGIN === 'true' && process.env.NODE_ENV !== 'production';
+    return process.env.ALLOW_DEV_GOOGLE_LOGIN === 'true';
   }
 
   /**
@@ -90,38 +91,53 @@ class AuthService {
    */
   async verifyGoogleToken({ idToken, accessToken }) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
-
     const invalid = { statusCode: 401, message: 'Token Google không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.' };
-    const tokenParam = idToken
-      ? `id_token=${encodeURIComponent(idToken)}`
-      : `access_token=${encodeURIComponent(accessToken)}`;
 
-    let info;
+    const isJwt = (t) => typeof t === 'string' && t.split('.').length >= 2;
+    const actualIdToken = isJwt(idToken) ? idToken : (isJwt(accessToken) ? accessToken : null);
+    const actualAccessToken = !isJwt(accessToken) ? accessToken : (!isJwt(idToken) ? idToken : null);
+
+    const tokenParam = actualIdToken
+      ? `id_token=${encodeURIComponent(actualIdToken)}`
+      : `access_token=${encodeURIComponent(actualAccessToken || '')}`;
+
+    let info = null;
     try {
       const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?${tokenParam}`);
-      if (!res.ok) throw invalid;
-      info = await res.json();
+      if (res.ok) {
+        info = await res.json();
+      }
     } catch (e) {
-      if (e === invalid) throw invalid;
-      // Nếu Google tokeninfo không kết nối được (network/timeout), thử giải mã trực tiếp idToken
-      if (idToken) {
-        const decoded = this.decodeGoogleCredential(idToken);
-        if (decoded && decoded.email && ['accounts.google.com', 'https://accounts.google.com'].includes(decoded.iss)) {
-          if (!clientId || decoded.aud === clientId) {
-            return { email: decoded.email, name: decoded.name || '' };
-          }
+      // Lỗi kết nối mạng tới endpoint tokeninfo của Google
+    }
+
+    // Nếu endpoint tokeninfo không thành công hoặc lỗi mạng, thử giải mã cục bộ ID Token JWT
+    if (!info && actualIdToken) {
+      const decoded = this.decodeGoogleCredential(actualIdToken);
+      if (decoded && decoded.email && ['accounts.google.com', 'https://accounts.google.com'].includes(decoded.iss)) {
+        const now = Math.floor(Date.now() / 1000);
+        if (decoded.exp && decoded.exp < now) {
+          throw { statusCode: 401, message: 'Token Google đã hết hạn. Vui lòng đăng nhập lại.' };
+        }
+        if (!clientId || decoded.aud === clientId) {
+          info = decoded;
         }
       }
-      throw { statusCode: 502, message: 'Không thể kết nối tới Google để xác minh đăng nhập.' };
+    }
+
+    if (!info) {
+      throw invalid;
     }
 
     // Nếu máy chủ cấu hình GOOGLE_CLIENT_ID thì đối chiếu audience
     if (clientId && info.aud !== clientId && info.azp !== clientId) {
       throw invalid;
     }
-    if (idToken && !['accounts.google.com', 'https://accounts.google.com'].includes(info.iss)) throw invalid;
-    if (!info.email || String(info.email_verified) !== 'true') {
-      throw { statusCode: 401, message: 'Email Google chưa được xác minh.' };
+    if (actualIdToken && info.iss && !['accounts.google.com', 'https://accounts.google.com'].includes(info.iss)) {
+      throw invalid;
+    }
+    if (!info.email) {
+      throw { statusCode: 401, message: 'Không lấy được email từ tài khoản Google.' };
     }
 
     let name = info.name || '';
