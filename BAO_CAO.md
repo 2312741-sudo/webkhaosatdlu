@@ -9,9 +9,16 @@ TRƯỜNG ĐẠI HỌC ĐÀ LẠT
 
 Giảng viên hướng dẫn: ThS. Trần Thị Phương Linh
 Sinh viên thực hiện:
-  1. 2312800 – Võ Công Vinh
-  2. 2312741 – Nguyễn Thanh Tâm
+  1. 2312741 – Nguyễn Thanh Tâm (Trưởng nhóm)
+  2. 2312800 – Võ Công Vinh
   3. 2312774 – Nguyễn Đức Tín
+
+BẢNG PHÂN CÔNG NHIỆM VỤ THÀNH VIÊN:
+| STT | Thành viên | MSSV | Vai trò | Nhiệm vụ chính đảm nhiệm | Đóng góp |
+| :---: | :--- | :---: | :---: | :--- | :---: |
+| 1 | Nguyễn Thanh Tâm | 2312741 | Trưởng nhóm | Kiến trúc hệ thống, CSDL quan hệ 3NF, lõi xác thực JWT, phân quyền RBAC 3 vai trò, tích hợp Google Workspace SSO DLU, rà soát an ninh bảo mật và thiết lập môi trường Cloud CI/CD (Vercel & Render) | 100% |
+| 2 | Võ Công Vinh | 2312800 | Thành viên | Thiết kế & xây dựng toàn bộ giao diện người dùng nhận diện DLU (React 18 + Tailwind CSS), phân hệ Sinh viên, trực quan hóa biểu đồ Chart.js (Likert, Trắc nghiệm), sinh mã QR động và quản lý trạng thái phiên làm việc | 100% |
+| 3 | Nguyễn Đức Tín | 2312774 | Thành viên | Phân hệ Cán bộ khảo sát (Quản lý vòng đời khảo sát, Question Builder, nhân bản khảo sát), xuất báo cáo Excel 2 sheets & PDF Unicode Roboto, xây dựng bộ kiểm thử tự động 6 module (`api.test.js`) và biên soạn tài liệu | 100% |
 
 Đà Lạt, tháng 9 năm 2026
 

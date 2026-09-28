@@ -12,15 +12,18 @@
 
 ---
 
-## 👥 Nhóm Sinh Viên Thực Hiện
-
-| STT | Họ và Tên | Mã số Sinh viên | Vai trò | Email liên hệ |
-| :---: | :--- | :---: | :--- | :--- |
-| **1** | **Nguyễn Thanh Tâm** | **2312741** | **Trưởng nhóm** (Full-stack, Kiến trúc CSDL, Bảo mật & CI/CD) | `2312741@dlu.edu.vn` |
-| **2** | **Võ Công Vinh** | **2312800** | Thành viên (Giao diện Frontend, Trực quan hóa Biểu đồ & Mã QR) | `2312800@dlu.edu.vn` |
-| **3** | **Nguyễn Đức Tín** | **2312774** | Thành viên (Nghiệp vụ Khảo sát, Xuất Báo cáo Excel/PDF & Kiểm thử) | `2312774@dlu.edu.vn` |
+## 👥 Thành Viên & Bảng Phân Công Công Việc
 
 - **Giảng viên hướng dẫn:** **ThS. Trần Thị Phương Linh** — Khoa Công nghệ Thông tin, Trường Đại học Đà Lạt.
+- **Học phần:** Báo cáo Chuyên ngành / Kiến trúc và Mẫu thiết kế phần mềm.
+
+### 📋 Bảng Phân Công Nhiệm Vụ Chi Tiết:
+
+| STT | Thành viên thực hiện | MSSV | Vai trò | Nhiệm vụ đảm nhiệm chính trong đề tài | Tỷ lệ đóng góp |
+| :---: | :--- | :---: | :---: | :--- | :---: |
+| **1** | **Nguyễn Thanh Tâm**<br>*(Email: `2312741@dlu.edu.vn`)* | **2312741** | **Trưởng nhóm** | • Thiết kế kiến trúc tổng thể hệ thống (Layered Architecture, RESTful API)<br>• Thiết kế và chuẩn hóa mô hình CSDL quan hệ 3NF (SQLite WAL, Transaction, Indexing)<br>• Xây dựng lõi xác thực JWT, phân quyền RBAC 3 vai trò và tích hợp Google Workspace SSO (@dlu.edu.vn)<br>• Rà soát an ninh, vá các lỗ hổng bảo mật (cửa hậu mật khẩu, giả mạo Google SSO, CORS, JWT secret)<br>• Thiết lập môi trường triển khai Cloud (CI/CD Vercel & Render) và quản trị Repository GitHub | **100%** |
+| **2** | **Võ Công Vinh**<br>*(Email: `2312800@dlu.edu.vn`)* | **2312800** | **Thành viên** | • Thiết kế và xây dựng toàn bộ giao diện người dùng theo nhận diện thương hiệu DLU (React 18 + Tailwind CSS)<br>• Xây dựng phân hệ Sinh viên: danh sách bài khảo sát, làm bài thi trắc nghiệm & Likert tối ưu cho Smartphone<br>• Tích hợp thư viện biểu đồ trực quan hóa dữ liệu thống kê thời gian thực (Chart.js & React-Chartjs-2)<br>• Xây dựng module sinh mã QR động và chia sẻ khảo sát đa nền tảng (qrcode.react)<br>• Quản lý trạng thái ứng dụng phía Client (AuthContext, ToastContext, bảo đảm phiên làm việc bền vững) | **100%** |
+| **3** | **Nguyễn Đức Tín**<br>*(Email: `2312774@dlu.edu.vn`)* | **2312774** | **Thành viên** | • Xây dựng phân hệ Cán bộ khảo sát: Quản lý vòng đời khảo sát (Draft/Publish/Close), trình soạn câu hỏi (Question Builder)<br>• Xây dựng tính năng nhân bản khảo sát (Duplicate Survey) và bộ lọc đối tượng khảo sát (isStudentEligible)<br>• Xây dựng phân hệ xuất báo cáo: file Excel 2 sheets (ExcelJS) và file PDF chuẩn văn bản hành chính nhúng font Unicode Roboto (PDFKit)<br>• Xây dựng kịch bản kiểm thử tự động toàn diện 6 module Backend (`server/test/api.test.js`)<br>• Kiểm thử tích hợp HTTP/CORS, thu thập số liệu và biên tập tài liệu Báo cáo chuyên ngành | **100%** |
 
 ---
 
