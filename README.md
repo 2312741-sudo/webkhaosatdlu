@@ -1,165 +1,194 @@
-# Website Khảo Sát Mức Độ Hài Lòng Của Sinh Viên — Trường Đại Học Đà Lạt (DLU)
+# 🎓 Hệ Thống Khảo Sát Mức Độ Hài Lòng Của Sinh Viên — Trường Đại Học Đà Lạt (DLU)
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-2312741--sudo%2Fwebkhaosatdlu-181717?style=flat&logo=github)](https://github.com/2312741-sudo/webkhaosatdlu)
-[![React](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?style=flat&logo=react)](https://react.dev/)
-[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?style=flat&logo=node.js)](https://nodejs.org/)
-[![Database](https://img.shields.io/badge/Database-SQLite%20WAL-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
-[![Build & Tests](https://img.shields.io/badge/Tests-100%25%20Passing-success?style=flat&logo=checkmarx)](https://github.com/2312741-sudo/webkhaosatdlu)
-[![Wiki](https://img.shields.io/badge/Documentation-Project%20Wiki-blue?style=flat&logo=gitbook)](WIKI.md)
+[![Live Demo](https://img.shields.io/badge/Demo%20Website-webkhaosatdlu.vercel.app-006241?style=for-the-badge&logo=vercel)](https://webkhaosatdlu.vercel.app)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-2312741--sudo%2Fwebkhaosatdlu-181717?style=for-the-badge&logo=github)](https://github.com/2312741-sudo/webkhaosatdlu)
+[![Build & Tests](https://img.shields.io/badge/Tests-100%25%20Passing%20(6%2F6%20Modules)-success?style=for-the-badge&logo=checkmarx)](https://github.com/2312741-sudo/webkhaosatdlu)
 
-> **Đồ án chuyên ngành** — Khoa Công nghệ Thông tin, Trường Đại học Đà Lạt  
-> **Chủ đề:** Xây dựng hệ thống khảo sát trực tuyến, thu thập phản hồi của sinh viên, thống kê trực quan hóa bằng biểu đồ, xuất báo cáo PDF/Excel và phân quyền 3 vai trò.  
+> **Báo cáo Chuyên ngành — Khoa Công nghệ Thông tin, Trường Đại học Đà Lạt**  
+> **Chủ đề:** Xây dựng website khảo sát trực tuyến mức độ hài lòng của sinh viên DLU, phân quyền 3 vai trò, tích hợp Google Workspace SSO, thống kê biểu đồ thời gian thực và xuất báo cáo Excel/PDF chuẩn hành chính.  
 > **Khẩu hiệu DLU:** *"Thụ nhân – Khai phóng – Bản sắc"*  
-> 📖 **Xem tài liệu chi tiết toàn diện tại:** [WIKI.md](WIKI.md)
+> 📄 **Xem toàn văn Báo cáo chuyên ngành:** [BAO_CAO.md](BAO_CAO.md)  
+> 📖 **Xem tài liệu kỹ thuật & Kiến trúc hệ thống:** [WIKI.md](WIKI.md)
 
 ---
 
-## 📌 1. Tech Stack & Kiến trúc Hệ thống
+## 👥 Nhóm Sinh Viên Thực Hiện
 
-- **Frontend:** ReactJS (Vite) + Tailwind CSS + Lucide Icons
-- **Backend:** Node.js + Express (RESTful API theo mô hình `Route - Controller - Service - Data Access`)
-- **Cơ sở dữ liệu:** SQLite / PostgreSQL / MySQL (Cấu trúc chuẩn hóa quan hệ 3NF theo ERD)
-- **Trực quan hóa biểu đồ:** Chart.js & React-Chartjs-2 (Biểu đồ thang đo Likert, Biểu đồ tròn/Doughnut trắc nghiệm, Biểu đồ tiến độ)
-- **Sinh mã QR & Chia sẻ:** `qrcode.react` & `qrcode` (Tạo link truy cập trực tiếp và tải ảnh mã QR .PNG)
-- **Xuất báo cáo:** `ExcelJS` (File Excel 2 sheets: Bảng tổng quan thống kê + Dữ liệu phản hồi chi tiết) & `PDFKit` (Báo cáo PDF chuẩn văn bản hành chính)
-- **Xác thực & Bảo mật:** JSON Web Token (JWT) + Hash mật khẩu `bcryptjs` + Chống nộp bài trùng lặp bằng Unique Constraint & Database Transaction.
+| STT | Họ và Tên | Mã số Sinh viên | Vai trò | Email liên hệ |
+| :---: | :--- | :---: | :--- | :--- |
+| **1** | **Nguyễn Thanh Tâm** | **2312741** | **Trưởng nhóm** (Full-stack, Kiến trúc CSDL, Bảo mật & CI/CD) | `2312741@dlu.edu.vn` |
+| **2** | **Võ Công Vinh** | **2312800** | Thành viên (Giao diện Frontend, Trực quan hóa Biểu đồ & Mã QR) | `2312800@dlu.edu.vn` |
+| **3** | **Nguyễn Đức Tín** | **2312774** | Thành viên (Nghiệp vụ Khảo sát, Xuất Báo cáo Excel/PDF & Kiểm thử) | `2312774@dlu.edu.vn` |
+
+- **Giảng viên hướng dẫn:** **ThS. Trần Thị Phương Linh** — Khoa Công nghệ Thông tin, Trường Đại học Đà Lạt.
 
 ---
 
-## 👥 2. Tài khoản Mẫu để Demo / Bảo vệ Đồ án
+## 🌐 Đường Dẫn Triển Khai Thực Tế (Live Deployment)
 
-| Vai trò | Email / Tài khoản | Mật khẩu | Thông tin chi tiết |
-| :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin@dlu.edu.vn` | `admin123` | Toàn quyền quản lý người dùng, phân quyền, xem nhật ký Audit Logs, quản lý mọi khảo sát |
-| **Cán bộ khảo sát (STAFF)** | `canbo.cntt@dlu.edu.vn` | `canbo123` | ThS. Nguyễn Văn Hải - Trợ lý Đào tạo Khoa CNTT. Tạo, sửa câu hỏi, phát hành, lấy mã QR, xem thống kê biểu đồ và xuất báo cáo |
-| **Cán bộ ĐBCL (STAFF)** | `canbo.dbcl@dlu.edu.vn` | `canbo123` | Trần Thị Thu Hà - Phòng Đảm bảo Chất lượng |
-| **Sinh viên (STUDENT)** | `2111234@dlu.edu.vn` (hoặc `2111234`) | `123456` | Sinh viên Trần Văn An - Lớp CTK45 (Khoa CNTT) |
-| **Sinh viên (STUDENT)** | `2211236@dlu.edu.vn` (hoặc `2211236`) | `123456` | Sinh viên Phạm Minh Cường - Lớp CTK46 (Khoa CNTT) |
-| **Sinh viên (STUDENT)** | `2311238@dlu.edu.vn` (hoặc `2311238`) | `123456` | Sinh viên Đặng Quốc Hùng - Lớp CTK47 (Khoa CNTT) |
+- 🔗 **Giao diện Ứng dụng Web (Frontend):** [https://webkhaosatdlu.vercel.app](https://webkhaosatdlu.vercel.app) *(Deploy trên nền tảng Vercel Cloud)*
+- 🔗 **Máy chủ Dữ liệu (Backend API):** `https://webkhaosatdlu.onrender.com` *(Deploy trên nền tảng Render Cloud)*
+- 🧪 **Kho lưu trữ Mã nguồn:** [https://github.com/2312741-sudo/webkhaosatdlu](https://github.com/2312741-sudo/webkhaosatdlu)
+
 ---
 
-## 🚀 3. Hướng dẫn Cài đặt & Khởi chạy Nhanh
+## 🚀 Tính Năng Nổi Bật Của Hệ Thống
 
-### Bước 1: Khởi tạo CSDL và Dữ liệu Mẫu (Seed Data)
+1. **Xác thực Đa kênh & Google Workspace DLU:**
+   - Hỗ trợ đăng nhập bằng tài khoản nội bộ (MSSV/Email) hoặc **Đăng nhập 1-chạm qua Google DLU (@dlu.edu.vn)**.
+   - Tự động nhận diện niên khóa (K45, K46, K47, K48) và lớp học từ cấu trúc email sinh viên mà không cần đăng ký thủ công.
+   - Có cơ chế phục hồi kết nối tự động khi máy chủ Render khởi động từ trạng thái ngủ (Cold Start).
+2. **Phân quyền chặt chẽ (RBAC) 3 cấp độ:**
+   - **Sinh viên (STUDENT):** Xem danh sách khảo sát áp dụng cho khoa/lớp mình, làm bài khảo sát, quét mã QR, cập nhật hồ sơ cá nhân.
+   - **Cán bộ khảo sát (STAFF):** Quản lý vòng đời khảo sát (Bản nháp, Phát hành, Đóng), tạo bộ câu hỏi linh hoạt, nhân bản khảo sát, chia sẻ mã QR, xem thống kê trực quan và xuất báo cáo.
+   - **Quản trị viên (ADMIN):** Quản lý toàn bộ người dùng, cấp quyền, đặt lại mật khẩu, khóa tài khoản vi phạm và theo dõi nhật ký kiểm toán (Audit Logs).
+3. **Bộ câu hỏi chuẩn kiểm định giáo dục:**
+   - Hỗ trợ 4 loại câu hỏi: Thang đo Likert 5 mức độ (từ 1 đến 5 sao), Trắc nghiệm đơn (Single choice), Trắc nghiệm nhiều lựa chọn (Multiple choice) và Ý kiến tự luận (Text feedback).
+4. **Bảo đảm toàn vẹn dữ liệu & Chống nộp trùng:**
+   - Ràng buộc `UNIQUE(survey_id, student_id)` và Database Transaction: mỗi sinh viên chỉ được nộp duy nhất 1 lần cho mỗi đợt khảo sát.
+   - Chế độ khảo sát ẩn danh bảo vệ thông tin sinh viên, không ghi nhận IP và mã người dùng.
+5. **Trực quan hóa số liệu & Xuất báo cáo hành chính:**
+   - Biểu đồ thời gian thực (Chart.js): Phân bố thang đo Likert, biểu đồ tròn phương án trắc nghiệm, tính điểm trung bình toàn bài và theo tiêu chí.
+   - Xuất file **Excel (.xlsx)** 2 sheet (Bảng tổng hợp thống kê + Bảng dữ liệu thô).
+   - Xuất file **PDF** định dạng văn bản hành chính DLU, nhúng font Unicode tiếng Việt Roboto không bao giờ lỗi font.
+
+---
+
+## 👥 Danh Sách Tài Khoản Mẫu Để Chấm Điểm / Demo
+
+Hệ thống được khởi tạo sẵn dữ liệu mẫu thực tế của Trường Đại học Đà Lạt:
+
+| Vai trò | Tài khoản / Email | Mật khẩu | Họ và Tên / Chức vụ | Quyền hạn chính |
+| :--- | :--- | :---: | :--- | :--- |
+| **Quản trị viên (ADMIN)** | `admin@dlu.edu.vn` | `admin123` | Quản trị viên Hệ thống DLU | Toàn quyền quản trị, xem Audit Logs, quản lý tài khoản |
+| **Cán bộ khảo sát (STAFF)** | `canbo.cntt@dlu.edu.vn` | `canbo123` | ThS. Nguyễn Văn Hải | Trợ lý Đào tạo Khoa CNTT. Tạo, sửa, phát hành khảo sát, xuất báo cáo |
+| **Cán bộ ĐBCL (STAFF)** | `canbo.dbcl@dlu.edu.vn` | `canbo123` | Trần Thị Thu Hà | Phòng Đảm bảo Chất lượng. Khảo sát toàn trường DLU |
+| **Sinh viên K45 (STUDENT)** | `2111234@dlu.edu.vn` *(hoặc `2111234`)* | `123456` | Trần Văn An (Lớp CTK45) | Làm khảo sát áp dụng cho Khoa CNTT / Toàn trường |
+| **Sinh viên K46 (STUDENT)** | `2211236@dlu.edu.vn` *(hoặc `2211236`)* | `123456` | Phạm Minh Cường (Lớp CTK46) | Làm khảo sát áp dụng cho Khoa CNTT / Toàn trường |
+| **Sinh viên K47 (STUDENT)** | `2311238@dlu.edu.vn` *(hoặc `2311238`)* | `123456` | Đặng Quốc Hùng (Lớp CTK47) | Làm khảo sát áp dụng cho Khoa CNTT / Toàn trường |
+| **Sinh viên K48 (STUDENT)** | `2411270@dlu.edu.vn` *(hoặc `2411270`)* | `123456` | Nguyễn Trọng Phúc (Lớp CTK48) | Làm khảo sát áp dụng cho Khoa CNTT / Toàn trường |
+
+*Ghi chú: Sinh viên cũng có thể đăng nhập trực tiếp bằng bất kỳ tài khoản Google Workspace nào có đuôi `@dlu.edu.vn`.*
+
+---
+
+## 🛠️ Công Nghệ & Kiến Trúc Hệ Thống
+
+- **Frontend:** React 18, Vite, Tailwind CSS, Lucide Icons, Chart.js, React-Chartjs-2, QRCode.react, Axios.
+- **Backend:** Node.js (≥ 20), Express 4 (Mô hình phân tầng `Route - Controller - Service - Data Access`).
+- **Cơ sở dữ liệu:** SQLite chế độ WAL (`node:sqlite`), chuẩn hóa dạng chuẩn 3 (3NF), 9 bảng, 7 chỉ mục hiệu năng cao.
+- **Bảo mật:** JWT (JSON Web Token), `bcryptjs` (salt 10 rounds), kiểm soát CORS đa nguồn động, kiểm tra quyền RBAC tức thời trên CSDL.
+- **Xử lý tài liệu:** `ExcelJS` (báo cáo bảng tính tự động kẻ ô), `PDFKit` (báo cáo văn bản nhúng font Unicode).
+- **Mẫu thiết kế (Design Patterns):** Layered Architecture, Singleton, Facade, Chain of Responsibility, Factory Function, Provider & Observer.
+
+---
+
+## 💻 Hướng Dẫn Cài Đặt & Chạy Cục Bộ (Local Development)
+
+### 1. Yêu cầu môi trường:
+- Node.js version ≥ 20.x
+- Trình quản lý gói npm
+
+### 2. Cài đặt các thư viện:
+```bash
+# Clone dự án từ GitHub
+git clone https://github.com/2312741-sudo/webkhaosatdlu.git
+cd webkhaosatdlu
+
+# Cài đặt dependencies cho cả Root, Client và Server
+npm install
+npm --prefix client install
+npm --prefix server install
+```
+
+### 3. Khởi tạo dữ liệu mẫu sạch (Seed Data):
 ```bash
 npm run seed
 ```
-Lệnh này sẽ tự động tạo cấu trúc bảng CSDL và nạp 4 Khoa, 9 người dùng mẫu, 3 khảo sát mẫu (đang mở và bản nháp) cùng các câu trả lời mẫu.
+*Lệnh này sẽ tự động khởi tạo cấu trúc CSDL và nạp sẵn 4 Khoa, 14 tài khoản mẫu, 3 phiếu khảo sát và các phản hồi mẫu.*
 
-### Bước 2: Chạy Backend Server
-Mở một cửa sổ Terminal:
+### 4. Chạy ứng dụng:
+Mở 2 cửa sổ Terminal:
 ```bash
+# Terminal 1: Chạy Backend API (Cổng 5001)
 npm run server
-```
-Server API sẽ khởi động tại: `http://localhost:5001`
 
-### Bước 3: Chạy Frontend Client
-Mở một cửa sổ Terminal khác:
-```bash
+# Terminal 2: Chạy Frontend Client (Cổng 5173)
 npm run client
 ```
-Giao diện ứng dụng sẽ khởi động tại: `http://localhost:5173`
+Mở trình duyệt truy cập: `http://localhost:5173`
 
-### Bước 4: Chạy Bộ Kiểm thử Tự động (Automated Test Suite)
+### 5. Chạy bộ kiểm thử tự động (Automated Test Suite):
 ```bash
 npm run test
 ```
+*Hệ thống sẽ chạy kiểm thử 100% tự động qua 6 Module nghiệp vụ và trả về kết quả chi tiết.*
 
 ---
 
-## 📂 4. Cấu trúc Thư mục Dự án
+## 📂 Cấu Trúc Thư Mục Dự Án
 
 ```
 webkhaosatdlu/
-├── package.json               # Root scripts điều khiển cả client và server
-├── server/                    # Source code Backend API (Node.js Express)
+├── BAO_CAO.md                 # Toàn văn Báo cáo chuyên ngành chi tiết
+├── WIKI.md                    # Tài liệu kiến trúc, ERD CSDL & API Reference
+├── README.md                  # Tài liệu tổng quan dự án & hướng dẫn chấm bài
+├── package.json               # Root scripts điều khiển toàn bộ dự án
+│
+├── server/                    # MÃ NGUỒN BACKEND API (Node.js + Express)
 │   ├── src/
-│   │   ├── config/            # Kết nối CSDL SQLite / Postgres / MySQL
-│   │   ├── controllers/       # Xử lý HTTP Request / Response
-│   │   ├── services/          # Xử lý Logic nghiệp vụ (Business Logic)
-│   │   ├── models/            # Schema và câu truy vấn CSDL
+│   │   ├── config/            # Cấu hình CSDL (db.js) và JWT (jwt.js)
+│   │   ├── controllers/       # Tiếp nhận và điều hướng HTTP Request / Response
+│   │   ├── services/          # Xử lý logic nghiệp vụ cốt lõi (Business Logic)
+│   │   ├── models/            # Lược đồ bảng CSDL và chỉ mục (schema.js)
 │   │   ├── middlewares/       # Xác thực JWT, Phân quyền RBAC, Bắt lỗi tập trung
 │   │   ├── routes/            # Khai báo các API Endpoints
-│   │   ├── seeders/           # Dữ liệu khởi tạo mẫu chuẩn tiếng Việt DLU
-│   │   └── utils/             # Trình xuất Excel (.xlsx), PDF, Audit Logger
-│   ├── test/                  # Bộ test tự động kiểm thử toàn diện
-│   └── server.js              # Điểm khởi động Server
-└── client/                    # Source code Frontend (ReactJS + Tailwind CSS)
+│   │   ├── seeders/           # Dữ liệu khởi tạo mẫu chuẩn DLU (seedData.js)
+│   │   ├── utils/             # Trình xuất Excel (.xlsx), PDF, Audit Logger
+│   │   └── server.js          # Điểm khởi động máy chủ API
+│   └── test/
+│       └── api.test.js        # Bộ kiểm thử tự động toàn diện 6 module
+│
+└── client/                    # MÃ NGUỒN FRONTEND (React 18 + Tailwind CSS)
     ├── src/
-    │   ├── components/        # Reusable UI (Navbar, Footer, Modal, Badge, QRModal, Charts)
-    │   ├── contexts/          # AuthContext (quản lý phiên đăng nhập), ToastContext (thông báo)
-    │   ├── pages/             # 8 Trang giao diện đầy đủ theo yêu cầu:
-    │   │   ├── auth/          # LoginPage (Đăng nhập theo nhận diện DLU)
+    │   ├── assets/            # Logo DLU và hình ảnh nhận diện
+    │   ├── components/        # UI dùng chung (Navbar, Footer, Modal, Charts, QR)
+    │   ├── contexts/          # AuthContext (phiên làm việc), ToastContext (thông báo)
+    │   ├── pages/             # 12 Trang giao diện chức năng:
+    │   │   ├── auth/          # LoginPage, GoogleCallbackPage
     │   │   ├── student/       # StudentSurveysPage, TakeSurveyPage, SurveySuccessPage
     │   │   ├── staff/         # SurveyListPage, SurveyEditorPage, QuestionBuilderPage
-    │   │   ├── analytics/     # SurveyAnalyticsPage (Biểu đồ), SurveyHistoryPage (Lịch sử)
+    │   │   ├── analytics/     # SurveyAnalyticsPage, SurveyHistoryPage
     │   │   └── admin/         # UserManagementPage, AuditLogPage
-    │   ├── services/          # api.js (Axios cấu hình auto JWT interceptors)
-    │   └── App.jsx            # Định tuyến điều hướng & phân quyền trang
+    │   ├── services/          # api.js (Axios auto gắn JWT và bắt lỗi timeout)
+    │   └── App.jsx            # Định tuyến React Router & ProtectedRoute
+    └── vercel.json            # Cấu hình định tuyến Single Page App trên Vercel
 ```
 
 ---
 
-## 🎓 5. Điểm Trọng Tâm để Bảo Vệ Trước Hội Đồng
+## ⚙️ Cấu Hình Biến Môi Trường (Environment Variables)
 
-1. **Module 1 - Xác thực & Phân quyền:**
-   - Sử dụng chuẩn công nghiệp JWT (JSON Web Token) kết hợp băm mật khẩu `bcrypt` 10 rounds.
-   - Middleware `authorizeRoles('ADMIN', 'STAFF', 'STUDENT')` ngăn chặn triệt để hành vi sinh viên cố tình truy cập trái phép vào API tạo/sửa khảo sát.
+### Backend (`server/.env`):
+```env
+PORT=5001
+NODE_ENV=production
+JWT_SECRET=chuoi_bi_mat_ngau_nhien_toi_thieu_32_ky_tu_dlu_survey_2026
+CLIENT_URL=https://webkhaosatdlu.vercel.app,http://localhost:5173
+ALLOW_DEV_GOOGLE_LOGIN=true
+TRUST_PROXY=1
+```
 
-2. **Module 2 - Thiết kế Câu hỏi Đa dạng:**
-   - Hỗ trợ 4 loại câu hỏi phổ biến trong nghiên cứu khoa học và khảo sát giáo dục: Thang đo Likert 1–5 mức độ, Trắc nghiệm đơn, Trắc nghiệm nhiều lựa chọn và Câu hỏi tự luận.
-   - Hỗ trợ phân loại nhóm tiêu chí (Cơ sở vật chất, Giảng dạy, Dịch vụ hỗ trợ) để phục vụ tính điểm theo tiêu chuẩn kiểm định giáo dục.
-
-3. **Module 3 - Thu thập & Chống Trả lời Trùng:**
-   - Cơ chế Transaction trong CSDL đảm bảo ghi nhận đồng thời `survey_responses` và chi tiết các câu trả lời `answers`.
-   - Ràng buộc `UNIQUE(survey_id, student_id)` và kiểm tra logic ở tầng Service đảm bảo mỗi sinh viên chỉ được gửi phản hồi 1 lần duy nhất trên mỗi đợt khảo sát.
-   - Giao diện thân thiện, tối ưu 100% trên thiết bị di động (Mobile Responsive), hỗ trợ sinh mã QR nhanh để sinh viên quét mã làm khảo sát tại giảng đường hoặc trên mạng xã hội.
-
-4. **Module 4 - Thống kê & Trực quan hóa:**
-   - Tự động tính toán điểm trung bình có trọng số cho thang đo Likert, tính tỷ lệ phần trăm phân bố cho câu hỏi trắc nghiệm.
-   - Tích hợp biểu đồ trực quan (Thanh ngang cho Likert, Doughnut tròn cho trắc nghiệm) và bộ lọc kết quả tức thì theo Lớp / Khóa.
-
-5. **Module 5 - Xuất Báo cáo & Lịch sử:**
-   - Xuất file **Excel (.xlsx)** gồm 2 sheet rõ ràng: Sheet tổng hợp thống kê điểm số và Sheet dữ liệu thô chi tiết từng câu trả lời.
-   - Xuất file **PDF** định dạng báo cáo văn bản hành chính của Trường Đại học Đà Lạt.
-   - Trang Lịch sử hỗ trợ tra cứu các đợt khảo sát đã kết thúc qua các năm học.
-
-6. **Module 6 - Quản trị Hệ thống:**
-   - Quản lý người dùng, cấp tài khoản, đổi mật khẩu, bật/khóa tài khoản.
-   - Nhật ký hoạt động (`audit_logs`) ghi lại vết thao tác (ai đã làm gì, vào thời điểm nào) phục vụ việc giám sát và bảo mật hệ thống.
+### Frontend (`client/.env`):
+```env
+VITE_API_URL=https://webkhaosatdlu.onrender.com
+# VITE_GOOGLE_CLIENT_ID=optional_oauth_client_id_from_google_cloud
+```
 
 ---
 
-## 🌐 6. Hướng dẫn Triển khai (Deploy) lên Môi trường Thực tế
+## 📜 Giấy Phép & Bản Quyền
 
-### Cách 1: Triển khai Full-stack trên VPS Ubuntu (Khuyên dùng cho Trường/Khoa)
-1. **Cài đặt môi trường trên VPS:**
-   ```bash
-   sudo apt update && sudo apt install -y nodejs npm nginx
-   sudo npm install -g pm2
-   ```
-2. **Clone mã nguồn và cài đặt dependencies:**
-   ```bash
-   git clone <URL_REPO> webkhaosatdlu
-   cd webkhaosatdlu
-   npm --prefix server install
-   npm --prefix client install
-   npm run seed
-   ```
-3. **Build Frontend:**
-   ```bash
-   npm run build
-   ```
-4. **Chạy Backend bằng PM2:**
-   ```bash
-   cd server
-   pm2 start src/server.js --name "dlu-survey-api"
-   pm2 startup && pm2 save
-   ```
-5. **Cấu hình Nginx làm Reverse Proxy:**
-   - Trỏ `root` đến thư mục `webkhaosatdlu/client/dist` cho Frontend React.
-   - Cấu hình `location /api/` proxy pass đến `http://localhost:5001`.
-
-### Cách 2: Triển khai Miễn phí trên Cloud (Render / Vercel)
-- **Backend API:** Deploy lên [Render.com](https://render.com) (Web Service Node.js, đặt biến môi trường `PORT=5001`, `NODE_ENV=production`, `JWT_SECRET=<chuỗi ngẫu nhiên ≥ 32 ký tự>`, `CLIENT_URL=<domain Vercel>`, `GOOGLE_CLIENT_ID=...`, `TRUST_PROXY=1`).
-- **Frontend UI:** Deploy lên [Vercel.com](https://vercel.com) (Root directory: `client`, Build command: `npm run build`, Output: `dist`, biến môi trường `VITE_API_URL` và `VITE_GOOGLE_CLIENT_ID`).
+Đồ án được thực hiện bởi nhóm sinh viên Khoa Công nghệ Thông tin — Trường Đại học Đà Lạt.  
+Dành riêng cho mục đích học tập, nghiên cứu và đánh giá học phần chuyên ngành.  
+Bản quyền © 2026 Nhóm tác giả 2312741, 2312800, 2312774.
